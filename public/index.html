@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HillSafe AI — Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #0a0e1a; color: white; }
+    .header {
+      background: #042C53;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #378ADD;
+    }
+    .header h1 { font-size: 20px; color: white; }
+    .header .status {
+      background: #1D9E75;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+    .header .time { font-size: 13px; color: #8899aa; }
+    .main { display: flex; height: calc(100vh - 50px); }
+    #map { flex: 1; height: 100%; }
+    .panel {
+      width: 300px;
+      background: #0d1526;
+      overflow-y: auto;
+      border-left: 1px solid #1a2a4a;
+    }
+    .stats {
+      display: flex;
+      padding: 10px;
+      gap: 8px;
+      background: #0d1526;
+      border-bottom: 1px solid #1a2a4a;
+    }
+    .stat-box {
+      flex: 1;
+      background: #142040;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .stat-box .num {
+      font-size: 22px;
+      font-weight: bold;
+      color: #378ADD;
+    }
+    .stat-box .lbl {
+      font-size: 10px;
+      color: #8899aa;
+      margin-top: 2px;
+    }
+    .panel-section {
+      padding: 15px;
+      border-bottom: 1px solid #1a2a4a;
+    }
+    .panel-section h3 {
+      font-size: 12px;
+      color: #378ADD;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .vehicle-card {
+      background: #142040;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-left: 3px solid #1D9E75;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .vehicle-card:hover { background: #1a2d55; }
+    .vehicle-card .plate { font-size: 14px; font-weight: bold; color: white; }
+    .vehicle-card .owner { font-size: 12px; color: #8899aa; margin-top: 3px; }
+    .vehicle-card .type { font-size: 12px; color: #1D9E75; margin-top: 3px; }
+    .vehicle-card .blood { font-size: 11px; color: #E24B4A; margin-top: 3px; }
+    .zone-card {
+      background: #142040;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-left: 3px solid #E24B4A;
+      cursor: pointer;
+    }
+    .zone-card:hover { background: #1a2d55; }
+    .zone-card .zone-name { font-size: 13px; font-weight: bold; color: white; }
+    .zone-card .zone-info { font-size: 12px; color: #E24B4A; margin-top: 3px; }
+    .alert-box {
+      background: #3a1010;
+      border: 1px solid #E24B4A;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #E24B4A;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #8899aa;
+      font-size: 13px;
+    }
+    .debug-box {
+      background: #0a1628;
+      border: 1px solid #378ADD;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px;
+      font-size: 11px;
+      color: #378ADD;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🏔️ HillSafe AI</h1>
+    <div class="time" id="clock">--:--:--</div>
+    <div class="status">🟢 System Active</div>
+  </div>
+
+  <div class="main">
+    <div id="map"></div>
+
+    <div class="panel">
+      <div class="stats">
+        <div class="stat-box">
+          <div class="num" id="total-vehicles">...</div>
+          <div class="lbl">Vehicles</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="total-zones">...</div>
+          <div class="lbl">Red Zones</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="total-alerts">0</div>
+          <div class="lbl">Alerts</div>
+        </div>
+      </div>
+
+      <!-- DEBUG STATUS -->
+      <div class="debug-box" id="debug-status">
+        ⏳ Connecting to server...
+      </div>
+
+      <div class="panel-section">
+        <h3>🚨 Live Alerts</h3>
+        <div class="alert-box">⚠️ System monitoring active</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🚗 Registered Vehicles</h3>
+        <div id="vehicles-list">
+          <div class="loading">⏳ Loading vehicles...</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔴 Danger Zones</h3>
+        <div id="zones-list">
+          <div class="loading">⏳ Loading zones...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================================
+// DEBUG HELPER
+// ============================================
+function debug(msg) {
+  console.log(msg);
+  document.getElementById('debug-status').innerHTML += '<br>' + msg;
+}
+
+// ============================================
+// LIVE CLOCK
+// ============================================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================
+// INITIALIZE MAP
+// ============================================
+debug('✅ Map initializing...');
+const map = L.map('map').setView([33.5120, 75.2000], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: 'HillSafe AI | OpenStreetMap'
+}).addTo(map);
+debug('✅ Map loaded!');
+
+// ============================================
+// VEHICLE MARKERS
+// ============================================
+const vehicleMarkers = {};
+
+function getIcon(type) {
+  const icons = { 'Car': '🚗', 'Truck': '🚛', 'Bus': '🚌' };
+  const emoji = icons[type] || '🚗';
+  return L.divIcon({
+    html: `<div style="font-size:24px;">${emoji}</div>`,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+}
+
+// ============================================
+// LOAD VEHICLES
+// ============================================
+async function loadVehicles() {
+  debug('⏳ Fetching vehicles from /vehicles ...');
+  try {
+    const res = await fetch('/vehicles');
+    debug('✅ Response received. Status: ' + res.status);
+    const data = await res.json();
+    debug('✅ Vehicles count: ' + data.total);
+    const vehicles = data.vehicles;
+
+    document.getElementById('total-vehicles').textContent = vehicles.length;
+
+    const positions = [
+      [33.5120, 75.2000],
+      [34.0837, 74.7973],
+      [32.7266, 74.8570]
+    ];
+
+    const list = document.getElementById('vehicles-list');
+    list.innerHTML = '';
+
+    vehicles.forEach((vehicle, i) => {
+      const pos = positions[i] || [33.5120, 75.2000];
+
+      const marker = L.marker(pos, { icon: getIcon(vehicle.vehicle_type) })
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family:Arial;min-width:180px;">
+            <b style="font-size:14px;">${vehicle.registration_number}</b>
+            <hr style="margin:6px 0;">
+            👤 <b>Owner:</b> ${vehicle.owner_name}<br>
+            📞 <b>Contact:</b> ${vehicle.owner_contact}<br>
+            🩸 <b>Blood:</b> ${vehicle.blood_group}<br>
+            🚗 <b>Type:</b> ${vehicle.vehicle_type}<br>
+            📋 <b>Insurance:</b>
+            <span style="color:${vehicle.insurance_status==='Valid'?'green':'red'}">
+              ${vehicle.insurance_status}
+            </span>
+          </div>
+        `);
+
+      vehicleMarkers[vehicle.vehicle_id] = marker;
+
+      const card = document.createElement('div');
+      card.className = 'vehicle-card';
+      card.innerHTML = `
+        <div class="plate">${vehicle.registration_number}</div>
+        <div class="owner">👤 ${vehicle.owner_name}</div>
+        <div class="type">🚗 ${vehicle.vehicle_type}</div>
+        <div class="blood">🩸 Blood: ${vehicle.blood_group}</div>
+      `;
+      card.onclick = () => {
+        map.setView(pos, 13);
+        marker.openPopup();
+      };
+      list.appendChild(card);
+    });
+
+    debug('✅ Vehicles loaded on map!');
+
+  } catch(err) {
+    debug('❌ ERROR: ' + err.message);
+    document.getElementById('vehicles-list').innerHTML =
+      '<div class="loading">❌ ' + err.message + '</div>';
+  }
+}
+
+// ============================================
+// LOAD ZONES
+// ============================================
+async function loadZones() {
+  debug('⏳ Fetching zones from /zones ...');
+  try {
+    const res = await fetch('/zones');
+    debug('✅ Zones response status: ' + res.status);
+    const data = await res.json();
+    debug('✅ Zones count: ' + data.total);
+    const zones = data.zones;
+
+    document.getElementById('total-zones').textContent = zones.length;
+
+    const list = document.getElementById('zones-list');
+    list.innerHTML = '';
+
+    zones.forEach(zone => {
+      L.circle([zone.latitude, zone.longitude], {
+        color: '#E24B4A',
+        fillColor: '#E24B4A',
+        fillOpacity: 0.25,
+        radius: zone.radius_meters,
+        weight: 2
+      }).addTo(map)
+        .bindPopup(`
+          <div style="font-family:Arial;min-width:180px;">
+            <b style="color:red;">🔴 ${zone.zone_name}</b>
+            <hr style="margin:6px 0;">
+            ⚡ Speed Limit: ${zone.speed_limit} km/h<br>
+            ⚠️ Risk: ${zone.risk_level}<br>
+            📝 ${zone.description}
+          </div>
+        `);
+
+      L.marker([zone.latitude, zone.longitude], {
+        icon: L.divIcon({
+          html: `<div style="background:#E24B4A;color:white;padding:3px 8px;
+                 border-radius:4px;font-size:11px;font-weight:bold;">
+                 🔴 ${zone.zone_name}</div>`,
+          className: '',
+          iconAnchor: [60, 0]
+        })
+      }).addTo(map);
+
+      const card = document.createElement('div');
+      card.className = 'zone-card';
+      card.innerHTML = `
+        <div class="zone-name">🔴 ${zone.zone_name}</div>
+        <div class="zone-info">⚡ Max: ${zone.speed_limit} km/h</div>
+        <div class="zone-info">⚠️ Risk: ${zone.risk_level}</div>
+      `;
+      list.appendChild(card);
+    });
+
+    debug('✅ Zones loaded on map!');
+
+  } catch(err) {
+    debug('❌ ZONES ERROR: ' + err.message);
+    document.getElementById('zones-list').innerHTML =
+      '<div class="loading">❌ ' + err.message + '</div>';
+  }
+}
+
+// ============================================
+// START
+// ============================================
+debug('🚀 HillSafe AI Dashboard starting...');
+loadVehicles();
+loadZones();
+</script>
+
+</body>
+</html>

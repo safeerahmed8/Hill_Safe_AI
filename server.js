@@ -8,6 +8,8 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Serve dashboard files
+app.use(express.static('public'));
 
 // ============================================
 // ROUTE 1 — Test if server is working
