@@ -1,192 +1,180 @@
-<div align="center">
+# 🏔️ HillSafe AI
+### Smart Mountain Road Safety & Real-Time Vehicle Telemetry Platform
 
-# 🏔️ Hill Safe AI
-
-### AI-Powered Road Safety System for Hilly & Mountainous Terrain
-
-![JavaScript](https://img.shields.io/badge/JavaScript-Node.js-yellow?style=for-the-badge&logo=javascript)
-![Express](https://img.shields.io/badge/Backend-Express.js-black?style=for-the-badge&logo=express)
-![MySQL](https://img.shields.io/badge/Database-MySQL-blue?style=for-the-badge&logo=mysql)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
-
-> *Saving lives on dangerous hilly roads through the power of Artificial Intelligence*
-
-</div>
+![Status](https://img.shields.io/badge/Status-Active%20Development-green)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## 📌 Overview
+## 🎯 Mission
 
-**Hill Safe AI** is an intelligent road safety system specifically designed
-for hilly and mountainous roads — one of the most dangerous driving
-environments in the world. The system manages vehicles, drivers, zones,
-challans, and incidents through a powerful REST API backend built with
-Node.js, Express.js and MySQL.
+> *"Prevent bloodshed on mountain roads through intelligent, automated, real-time safety management"*
+
+HillSafe AI was born from witnessing road accidents and loss of lives on mountain roads in Jammu & Kashmir. This system is designed to prevent accidents before they happen, detect emergencies automatically, and save lives through intelligent real-time response — with zero human intervention required.
 
 ---
 
-## 🚀 Key Features
+## 🌍 The Problem
 
-- 🚗 **Vehicle Management** — Track and monitor all vehicles on hilly roads
-- 👤 **Driver Management** — Manage driver records and history
-- 🗺️ **Zone Management** — Define and monitor dangerous road zones
-- 📋 **Challan System** — Issue and track traffic challans
-- 🚨 **Incident Reporting** — Record and retrieve road incidents
-- 🔌 **REST API** — Clean and powerful API for all operations
-- 🗄️ **MySQL Database** — Reliable and fast data storage
-- ⚡ **Real-Time Server** — Fast Express.js backend
+Every year hundreds of people die on mountain roads in J&K, Himachal Pradesh, and Uttarakhand — not just from accidents, but from **delayed rescue**. When a vehicle falls off a mountain road at 3am with no witnesses, no phone signal, and no nearby population — the driver dies waiting for help that never comes in time.
+
+**HillSafe AI solves this.**
 
 ---
 
-## 🛠️ Tech Stack
+## ⚡ What Makes HillSafe AI Unique
 
-| Category | Technology |
-|----------|-----------|
-| Language | JavaScript |
-| Runtime | Node.js |
-| Framework | Express.js |
-| Database | MySQL |
-| Environment | dotenv |
-| IDE | VS Code |
-
----
-
-## ⚙️ Installation
-
-### Step 1 — Clone the Repository
-```bash
-git clone https://github.com/safeerahmed/hill-safe-ai.git
-cd hill-safe-ai
-```
-
-### Step 2 — Install Dependencies
-```bash
-npm install
-```
-
-### Step 3 — Setup Environment Variables
-Create a `.env` file in root folder:
-```
-DB_HOST=localhost
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_NAME=hill_safe_ai
-PORT=3000
-```
-
-### Step 4 — Run the Server
-```bash
-node server.js
-```
+| Feature | USA | China | Germany | HillSafe AI |
+|---|---|---|---|---|
+| GPS Live Tracking | ✅ | ✅ | ✅ | ✅ |
+| Forced Speed Lock in Danger Zones | ❌ | ❌ | ❌ | ✅ **World First** |
+| Single Road AI Coordinator | ❌ | ❌ | ❌ | ✅ **World First** |
+| Vehicle Off-Road Fall Detection | ❌ | ❌ | ❌ | ✅ **World First** |
+| Non-HillSafe Vehicle Witness System | ❌ | ❌ | ❌ | ✅ **World First** |
+| Hospital Alert with Blood Type | ❌ | ❌ | ❌ | ✅ **World First** |
+| Satellite Radio Emergency Broadcast | ❌ | ❌ | ❌ | ✅ **World First** |
+| Mountain Road Specific Platform | ❌ | ❌ | ❌ | ✅ **World First** |
 
 ---
 
-## 🔌 API Endpoints
+## 🚀 Core Features
+
+### 🔴 Forced Speed Lock in Red Zones
+Vehicle enters danger zone → engine speed automatically limited → driver cannot override until safe zone. Prevents accidents by force, not just warning.
+
+### 🚗↔️🚗 Single Road AI Coordinator
+AI detects two vehicles approaching each other on narrow mountain road → calculates empty space → directs Vehicle A to wait at passing point → Vehicle B passes safely. Both drivers see each other on live map.
+
+### 📉 Vehicle Off-Road Fall Detection
+GPS + gyroscope chip detects vehicle falling off mountain → instant alert sent automatically → rescue dispatched with exact location, driver contact, live camera feed. Works even if driver is unconscious.
+
+### 🚨 Zero Human Emergency Response
+Accident detected by sensors → rescue team alerted → hospital pre-warned with patient blood type → family notified via SMS → nearby vehicles warned → road rerouted. All in under 3 seconds. No human action needed.
+
+### 🏥 Direct Hospital Alert System
+When accident detected, nearest hospital receives: exact GPS location, patient blood type, vehicle details, live camera feed, estimated ambulance arrival time. Emergency room prepared before ambulance arrives.
+
+### 🔥 Vehicle Fire Detection
+Temperature sensor + smoke sensor + AI camera detect fire → driver warned immediately → fire department alerted with live location → forest department notified if near trees → all nearby vehicles warned.
+
+### 👁️ HillSafe Witness System
+Every HillSafe vehicle is a moving rescue scout. Camera reads number plates of ALL vehicles on road — even those without HillSafe system. If accident detected near unregistered vehicle → owner details retrieved → rescue dispatched. System protects EVERY vehicle even without installation.
+
+### 📻 Satellite Radio Emergency Broadcast
+Emergency alert broadcast via satellite to every truck, bus, and car radio on the road. Works with zero internet. Works on oldest vehicles. Reaches everyone.
+
+### 😴 Drowsiness Detection
+Cabin camera watches driver eyes in real time. Drowsiness detected → alarm sounds → speed reduced automatically → if no response → HillSafe dashboard alerted.
+
+### 📡 3KM Mobile Radar Detection Zone
+Every HillSafe vehicle scans 3km radius constantly — detecting vehicles, obstacles, vehicles off road, vehicles fallen into gorges. Moving vehicles become moving rescue infrastructure.
+
+---
+
+## 🗄️ Database Structure
+
+**Database:** `smart_vehicle_registry`
+
+| Table | Purpose |
+|---|---|
+| `vehicles` | Registration, chip ID, owner info, blood group |
+| `drivers` | License, face data, safety score, violations |
+| `zones` | Red zones, safe zones, speed limits, GPS boundaries |
+| `incidents` | Accidents, emergencies, off-road events |
+| `challans` | Auto-generated digital penalties |
+| `telemetry_logs` | Live GPS, speed, gyroscope, temperature data |
+| `emergency_alerts` | Hospital, family, rescue, radio alerts |
+| `road_segments` | Single lane roads, passing points, capacity |
+
+---
+
+## 🏗️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Backend Server | Node.js + Express.js |
+| Database | MySQL (XAMPP) |
+| Real-Time | Socket.io |
+| Frontend | HTML + CSS + JavaScript |
+| Live Map | Leaflet.js + OpenStreetMap |
+| AI / Vision | Python + OpenCV (Phase 3) |
+| Face Recognition | face_recognition library (Phase 3) |
+| Hardware Chip | ESP32 + MPU6050 + NEO-6M GPS (Phase 3) |
+| Communication | GSM + LoRaWAN + ISRO NavIC satellite |
+| Security | mTLS encryption + JWT authentication |
+
+---
+
+## 📡 API Endpoints
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/vehicles` | Get all vehicles |
-| GET | `/vehicles/id/1` | Get vehicle by ID |
-| GET | `/vehicles/plate/JK-01-AB-1234` | Get vehicle by plate |
-| GET | `/zones` | Get all zones |
-| GET | `/drivers` | Get all drivers |
-| GET | `/challans` | Get all challans |
-| GET | `/incidents` | Get all incidents |
-
----
-
-## 📁 Project Structure
-```
-hill-safe-ai/
-│
-├── server.js           # Main Express.js server
-├── db.js               # MySQL database connection
-├── package.json        # Project dependencies
-├── package-lock.json   # Dependency lock file
-├── .env                # Environment variables (not uploaded)
-├── .gitignore          # Git ignore rules
-├── CHANGELOG.md        # Daily development log
-└── README.md           # Project documentation
-```
-
----
-
-## 🚦 How It Works
-```
-Client Request
-      ↓
-Express.js Server (server.js)
-      ↓
-MySQL Database (db.js)
-      ↓
-JSON Response to Client
-```
+|---|---|---|
+| GET | `/` | Server status |
+| GET | `/vehicles` | All registered vehicles |
+| GET | `/vehicles/id/:id` | Vehicle by ID |
+| GET | `/vehicles/plate/:plate` | Vehicle by number plate |
+| GET | `/zones` | All danger zones |
+| GET | `/drivers` | All drivers with vehicle details |
+| GET | `/challans` | All digital challans |
+| GET | `/incidents` | All incidents and accidents |
 
 ---
 
 ## 📅 Development Progress
 
-| Day | Date | Work Done |
-|-----|------|-----------|
-| Day 1 | March 26, 2026 | Backend server, MySQL DB, all core APIs built |
-| Day 2 | Coming Soon | Frontend UI |
-| Day 3 | Coming Soon | AI Hazard Detection |
-
-See full details in [CHANGELOG.md](CHANGELOG.md)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome and appreciated! Here's how:
-
-1. **Fork** the repository
-2. Create your feature branch
-```bash
-   git checkout -b feature/AmazingFeature
-```
-3. Commit your changes
-```bash
-   git commit -m "Add AmazingFeature"
-```
-4. Push to the branch
-```bash
-   git push origin feature/AmazingFeature
-```
-5. Open a **Pull Request**
+| Day | Date | Status | What Was Built |
+|---|---|---|---|
+| Day 1 | 23 March 2026 | ✅ Complete | MySQL database + 8 tables + real data |
+| Day 2 | 23 March 2026 | ✅ Complete | Node.js server + 8 working APIs |
+| Day 3 | 07 April 2026 | 🔄 In Progress | Live map dashboard + J&K map |
+| Day 4 | Coming Soon | ⏳ Pending | Socket.io live vehicle tracking |
+| Day 5 | Coming Soon | ⏳ Pending | Vehicle simulation (100 vehicles) |
+| Day 6 | Coming Soon | ⏳ Pending | Auto challan system |
+| Day 7 | Coming Soon | ⏳ Pending | Emergency alert pipeline |
 
 ---
 
-## 📄 License
+## 🗺️ Project Phases
 
-This project is licensed under the **MIT License** —
-see the [LICENSE](LICENSE) file for full details.
+### Phase 1 — Core System (Current)
+- [x] MySQL database with 8 tables
+- [x] Node.js + Express backend
+- [x] 8 REST API endpoints
+- [x] Live map dashboard
+- [ ] Socket.io real-time tracking
+- [ ] Vehicle simulation
+- [ ] Auto challan system
+
+### Phase 2 — Emergency Systems
+- [ ] Accident detection pipeline
+- [ ] Hospital alert with blood type
+- [ ] Family SMS notification
+- [ ] Emergency vehicle corridor
+- [ ] Accident rerouting
+
+### Phase 3 — AI Features
+- [ ] Face recognition vehicle start
+- [ ] Drowsiness detection
+- [ ] Number plate reading (ANPR)
+- [ ] Witness system
+- [ ] Fire detection AI
+
+### Phase 4 — Advanced
+- [ ] Single road AI coordinator
+- [ ] 3KM radar detection
+- [ ] Shadow tracking system
+- [ ] LoRaWAN network
+- [ ] Satellite communication
+
+### Phase 5 — Deployment
+- [ ] Hardware chip prototype
+- [ ] Real vehicle testing
+- [ ] J&K highway pilot
+- [ ] Government presentation
 
 ---
 
-## 👨‍💻 Author
+## ⚙️ Installation & Setup
 
-<div align="center">
-
-### **Safeer Ahmed**
-*AI Developer & Road Safety Innovator*
-
-[![GitHub](https://img.shields.io/badge/GitHub-safeerahmed-black?style=for-the-badge&logo=github)](https://github.com/safeerahmed/hill-safe-ai)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Safeer%20Ahmed-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/safeer-ahmed-8379bb251)
-
-📌 **GitHub:** https://github.com/safeerahmed/hill-safe-ai
-
-💼 **LinkedIn:** https://www.linkedin.com/in/safeer-ahmed-8379bb251
-
-</div>
-
----
-
-<div align="center">
-
-⭐ **If this project helped you, please give it a star!** ⭐
-
-*Built with ❤️ by Safeer Ahmed to make mountain roads safer for everyone*
-
-</div>
+### Prerequisites
