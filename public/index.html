@@ -3,361 +3,740 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HillSafe AI — Dashboard</title>
+  <title>HillSafe AI — 100 Vehicle Fleet</title>
+
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- MarkerCluster (for 100 marker performance) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --bg:       #080d1a;
+      --panel:    #0b1220;
+      --card:     #0f1c35;
+      --border:   #1a2d50;
+      --blue:     #2e8fff;
+      --green:    #14d490;
+      --red:      #ff3d3d;
+      --orange:   #ff8c00;
+      --yellow:   #ffd600;
+      --text:     #cde0ff;
+      --muted:    #4a6080;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #0a0e1a; color: white; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ---- HEADER ---- */
     .header {
-      background: #042C53;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid #378ADD;
+      height: 48px;
+      background: linear-gradient(90deg, #040b1a 0%, #0a1628 60%, #040b1a 100%);
+      border-bottom: 1px solid var(--blue);
+      display: flex; align-items: center;
+      padding: 0 16px; gap: 16px;
+      box-shadow: 0 0 20px rgba(46,143,255,0.15);
     }
-    .header h1 { font-size: 20px; color: white; }
-    .header .status {
-      background: #1D9E75;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 13px;
+    .header-logo {
+      font-size: 18px; font-weight: 700; color: var(--blue);
+      letter-spacing: 2px; white-space: nowrap;
     }
-    .header .time { font-size: 13px; color: #8899aa; }
-    .main { display: flex; height: calc(100vh - 50px); }
-    #map { flex: 1; height: 100%; }
+    .header-logo span { color: var(--green); }
+    .header-subtitle { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+    .header-spacer { flex: 1; }
+    .header-clock {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; color: var(--green);
+      background: rgba(20,212,144,0.08);
+      padding: 4px 10px; border-radius: 4px;
+      border: 1px solid rgba(20,212,144,0.2);
+    }
+    .status-pill {
+      font-size: 11px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+      background: rgba(20,212,144,0.15);
+      border: 1px solid var(--green);
+      color: var(--green); letter-spacing: 1px;
+    }
+
+    /* ---- LAYOUT ---- */
+    .main { display: flex; height: calc(100vh - 48px); }
+    #map { flex: 1; }
     .panel {
-      width: 300px;
-      background: #0d1526;
-      overflow-y: auto;
-      border-left: 1px solid #1a2a4a;
+      width: 320px; background: var(--panel);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
     }
-    .stats {
-      display: flex;
-      padding: 10px;
-      gap: 8px;
-      background: #0d1526;
-      border-bottom: 1px solid #1a2a4a;
+    .panel-scroll { flex: 1; overflow-y: auto; }
+    .panel-scroll::-webkit-scrollbar { width: 4px; }
+    .panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ---- FLEET STATUS BAR ---- */
+    .fleet-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border-bottom: 1px solid var(--border);
     }
-    .stat-box {
-      flex: 1;
-      background: #142040;
-      border-radius: 8px;
-      padding: 8px;
+    .fleet-stat {
+      background: var(--card); padding: 10px 6px;
       text-align: center;
     }
-    .stat-box .num {
-      font-size: 22px;
-      font-weight: bold;
-      color: #378ADD;
+    .fleet-stat .num {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 22px; font-weight: 700;
     }
-    .stat-box .lbl {
-      font-size: 10px;
-      color: #8899aa;
-      margin-top: 2px;
+    .fleet-stat .lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+    .fleet-stat.total  .num { color: var(--blue); }
+    .fleet-stat.safe   .num { color: var(--green); }
+    .fleet-stat.warn   .num { color: var(--orange); }
+    .fleet-stat.crit   .num { color: var(--red); }
+
+    /* ---- STATUS SUMMARY ---- */
+    .status-row {
+      display: flex; gap: 6px;
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
     }
-    .panel-section {
-      padding: 15px;
-      border-bottom: 1px solid #1a2a4a;
+    .status-chip {
+      flex: 1; padding: 6px 4px; border-radius: 6px;
+      text-align: center; font-size: 10px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
     }
-    .panel-section h3 {
-      font-size: 12px;
-      color: #378ADD;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
+    .chip-normal   { background: rgba(20,212,144,0.1);  border: 1px solid rgba(20,212,144,0.3);  color: var(--green); }
+    .chip-danger   { background: rgba(255,140,0,0.1);   border: 1px solid rgba(255,140,0,0.3);   color: var(--orange); }
+    .chip-accident { background: rgba(255,61,61,0.1);   border: 1px solid rgba(255,61,61,0.3);   color: var(--red); animation: pulseRed 1s infinite; }
+    .chip-challans { background: rgba(255,214,0,0.1);   border: 1px solid rgba(255,214,0,0.3);   color: var(--yellow); }
+    @keyframes pulseRed { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .status-chip .big { font-size: 18px; font-family: 'Share Tech Mono', monospace; display: block; }
+
+    /* ---- SECTION ---- */
+    .section { border-bottom: 1px solid var(--border); }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 8px;
     }
-    .vehicle-card {
-      background: #142040;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-left: 3px solid #1D9E75;
-      cursor: pointer;
+    .section-head h3 {
+      font-size: 10px; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 2px;
+    }
+    .section-body { padding: 0 10px 10px; }
+
+    /* ---- SEARCH ---- */
+    .search-wrap { padding: 8px 10px; position: relative; }
+    .search-input {
+      width: 100%; background: var(--card);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 10px 7px 32px;
+      color: var(--text); font-family: 'Rajdhani', sans-serif;
+      font-size: 13px; outline: none;
+    }
+    .search-input:focus { border-color: var(--blue); }
+    .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+
+    /* ---- VEHICLE CARDS (compact) ---- */
+    .v-card {
+      background: var(--card);
+      border-left: 3px solid var(--green);
+      border-radius: 6px; padding: 7px 9px;
+      margin-bottom: 5px; cursor: pointer;
       transition: background 0.2s;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 2px 8px; align-items: center;
     }
-    .vehicle-card:hover { background: #1a2d55; }
-    .vehicle-card .plate { font-size: 14px; font-weight: bold; color: white; }
-    .vehicle-card .owner { font-size: 12px; color: #8899aa; margin-top: 3px; }
-    .vehicle-card .type { font-size: 12px; color: #1D9E75; margin-top: 3px; }
-    .vehicle-card .blood { font-size: 11px; color: #E24B4A; margin-top: 3px; }
-    .zone-card {
-      background: #142040;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-left: 3px solid #E24B4A;
-      cursor: pointer;
+    .v-card:hover { background: #142240; }
+    .v-card.danger   { border-left-color: var(--orange); background: rgba(255,140,0,0.07); }
+    .v-card.accident { border-left-color: var(--red); background: rgba(255,61,61,0.1); animation: pulseRed 0.8s infinite; }
+    .v-plate { font-size: 12px; font-weight: 700; color: white; font-family: 'Share Tech Mono', monospace; }
+    .v-name  { font-size: 10px; color: var(--muted); }
+    .v-speed {
+      font-size: 11px; font-weight: 700; font-family: 'Share Tech Mono', monospace;
+      color: var(--green); text-align: right;
     }
-    .zone-card:hover { background: #1a2d55; }
-    .zone-card .zone-name { font-size: 13px; font-weight: bold; color: white; }
-    .zone-card .zone-info { font-size: 12px; color: #E24B4A; margin-top: 3px; }
-    .alert-box {
-      background: #3a1010;
-      border: 1px solid #E24B4A;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-      font-size: 12px;
-      color: #E24B4A;
+    .v-speed.fast { color: var(--red); }
+    .v-speed.mid  { color: var(--orange); }
+    .v-zone { font-size: 9px; color: var(--orange); grid-column: 1/-1; }
+    .v-type-badge {
+      font-size: 9px; padding: 1px 5px; border-radius: 3px;
+      background: rgba(46,143,255,0.15); color: var(--blue);
+      border: 1px solid rgba(46,143,255,0.2);
     }
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #8899aa;
-      font-size: 13px;
+
+    /* ---- ALERTS ---- */
+    .alert-item {
+      border-radius: 6px; padding: 6px 9px;
+      margin-bottom: 5px; font-size: 11px;
+      border-left: 3px solid;
     }
+    .alert-item.danger   { background: rgba(255,61,61,0.08);  border-color: var(--red);    color: #ff8080; }
+    .alert-item.warning  { background: rgba(255,140,0,0.08);  border-color: var(--orange); color: var(--orange); }
+    .alert-item.info     { background: rgba(46,143,255,0.08); border-color: var(--blue);   color: var(--blue); }
+    .alert-item.challan  { background: rgba(255,214,0,0.07);  border-color: var(--yellow); color: var(--yellow); }
+    .alert-time { font-size: 9px; opacity: 0.6; margin-bottom: 1px; font-family: 'Share Tech Mono', monospace; }
+
+    /* ---- DEMO CONTROLS ---- */
+    .controls { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .controls-row { display: flex; gap: 5px; }
+    .btn {
+      flex: 1; padding: 8px 6px; border: none; border-radius: 6px;
+      font-family: 'Rajdhani', sans-serif; font-size: 11px;
+      font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-red    { background: linear-gradient(135deg, #c0392b, #ff3d3d); color: white; }
+    .btn-green  { background: linear-gradient(135deg, #0d8a5f, #14d490); color: #001a0d; }
+    .btn-blue   { background: linear-gradient(135deg, #1a5aaa, #2e8fff); color: white; }
+    .btn-yellow { background: linear-gradient(135deg, #a07800, #ffd600); color: #1a1000; }
+    .btn-full   { width: 100%; flex: none; }
+
+    /* ---- DEBUG BOX ---- */
     .debug-box {
-      background: #0a1628;
-      border: 1px solid #378ADD;
-      border-radius: 8px;
-      padding: 10px;
-      margin: 10px;
-      font-size: 11px;
-      color: #378ADD;
-      font-family: monospace;
+      margin: 0 10px 10px;
+      background: rgba(46,143,255,0.05);
+      border: 1px solid rgba(46,143,255,0.2);
+      border-radius: 6px; padding: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; color: rgba(46,143,255,0.7);
+      max-height: 100px; overflow-y: auto;
     }
+
+    /* ---- ZONE CARDS ---- */
+    .z-card {
+      background: rgba(255,61,61,0.07);
+      border: 1px solid rgba(255,61,61,0.2);
+      border-radius: 6px; padding: 7px 10px; margin-bottom: 5px;
+    }
+    .z-name { font-size: 12px; font-weight: 700; color: white; }
+    .z-info { font-size: 10px; color: var(--red); margin-top: 1px; }
+
+    /* J&K badge */
+    .jk-label {
+      background: rgba(46,143,255,0.85); color: white;
+      padding: 3px 8px; border-radius: 4px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px; font-weight: 700;
+      border: 1px solid var(--blue); white-space: nowrap;
+    }
+
+    .show-more {
+      display: block; width: 100%; margin-top: 5px;
+      background: none; border: 1px dashed var(--border);
+      color: var(--muted); border-radius: 6px;
+      padding: 6px; font-size: 11px; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .show-more:hover { border-color: var(--blue); color: var(--blue); }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>🏔️ HillSafe AI</h1>
-    <div class="time" id="clock">--:--:--</div>
-    <div class="status">🟢 System up and running</div>
-  </div>
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">HILL<span>SAFE</span> AI</div>
+  <div class="header-subtitle">SMART MOUNTAIN ROAD SAFETY — JAMMU & KASHMIR</div>
+  <div class="header-spacer"></div>
+  <div class="header-clock" id="clock">--:--:--</div>
+  <div class="status-pill">🟢 100 VEHICLES LIVE</div>
+</div>
 
-  <div class="main">
-    <div id="map"></div>
+<div class="main">
+  <div id="map"></div>
 
-    <div class="panel">
-      <div class="stats">
-        <div class="stat-box">
-          <div class="num" id="total-vehicles">...</div>
-          <div class="lbl">Vehicles</div>
-        </div>
-        <div class="stat-box">
-          <div class="num" id="total-zones">...</div>
-          <div class="lbl">Red Zones</div>
-        </div>
-        <div class="stat-box">
-          <div class="num" id="total-alerts">0</div>
-          <div class="lbl">Alerts</div>
+  <div class="panel">
+
+    <!-- FLEET STATUS BAR -->
+    <div class="fleet-bar">
+      <div class="fleet-stat total"><div class="num" id="stat-total">100</div><div class="lbl">Fleet</div></div>
+      <div class="fleet-stat safe"> <div class="num" id="stat-normal">100</div><div class="lbl">Safe</div></div>
+      <div class="fleet-stat warn"> <div class="num" id="stat-danger">0</div><div class="lbl">Danger</div></div>
+      <div class="fleet-stat crit"> <div class="num" id="stat-accident">0</div><div class="lbl">Accident</div></div>
+    </div>
+
+    <!-- STATUS CHIPS -->
+    <div class="status-row">
+      <div class="status-chip chip-normal">  <span class="big" id="chip-normal">100</span>Normal</div>
+      <div class="status-chip chip-danger">  <span class="big" id="chip-danger">0</span>Danger</div>
+      <div class="status-chip chip-accident"><span class="big" id="chip-accident">0</span>Accident</div>
+      <div class="status-chip chip-challans"><span class="big" id="chip-challans">0</span>Challans</div>
+    </div>
+
+    <div class="panel-scroll">
+
+      <!-- DEBUG -->
+      <div class="debug-box" id="debug">⏳ Starting HillSafe AI v5.0...</div>
+
+      <!-- DEMO CONTROLS -->
+      <div class="section">
+        <div class="section-head"><h3>🎮 Demo Controls</h3></div>
+        <div class="controls">
+          <div class="controls-row">
+            <button class="btn btn-red"   onclick="simulateAccident(Math.floor(Math.random()*100)+1)">🚨 Random Accident</button>
+            <button class="btn btn-red"   onclick="massAccident()">💥 Mass Accident (5)</button>
+          </div>
+          <div class="controls-row">
+            <button class="btn btn-green" onclick="resetAll()">✅ Reset All Vehicles</button>
+            <button class="btn btn-blue"  onclick="testVoice()">🔊 Voice Test</button>
+          </div>
+          <button class="btn btn-yellow btn-full" onclick="viewChallans()">💸 View Auto Challans</button>
         </div>
       </div>
 
-      <!-- DEBUG STATUS -->
-      <div class="debug-box" id="debug-status">
-        ⏳ Connecting to server...
-      </div>
-
-      <div class="panel-section">
-        <h3>🚨 Live Alerts</h3>
-        <div class="alert-box">⚠️ System monitoring active</div>
-      </div>
-
-      <div class="panel-section">
-        <h3>🚗 Registered Vehicles</h3>
-        <div id="vehicles-list">
-          <div class="loading">⏳ Loading vehicles...</div>
+      <!-- LIVE ALERTS -->
+      <div class="section">
+        <div class="section-head">
+          <h3>🚨 Live Alerts</h3>
+          <span style="font-size:10px;color:var(--muted)" id="alert-count">0</span>
+        </div>
+        <div class="section-body">
+          <div id="alerts-list">
+            <div class="alert-item info"><div class="alert-time">SYSTEM</div>Monitoring 100 vehicles across J&K...</div>
+          </div>
         </div>
       </div>
 
-      <div class="panel-section">
-        <h3>🔴 Danger Zones</h3>
-        <div id="zones-list">
-          <div class="loading">⏳ Loading zones...</div>
+      <!-- VEHICLE LIST WITH SEARCH -->
+      <div class="section">
+        <div class="section-head"><h3>🚗 Live Fleet — 100 Vehicles</h3></div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="search" type="text" placeholder="Search plate or driver..." oninput="filterVehicles()">
+        </div>
+        <div class="section-body">
+          <div id="vehicles-list"><div style="color:var(--muted);font-size:12px;padding:10px;">⏳ Loading 100 vehicles...</div></div>
         </div>
       </div>
+
+      <!-- DANGER ZONES -->
+      <div class="section">
+        <div class="section-head"><h3>🔴 Danger Zones</h3></div>
+        <div class="section-body"><div id="zones-list"><div style="color:var(--muted);font-size:12px;">⏳ Loading...</div></div></div>
+      </div>
+
     </div>
   </div>
+</div>
 
 <script>
 // ============================================
-// DEBUG HELPER
+// DEBUG
 // ============================================
 function debug(msg) {
-  console.log(msg);
-  document.getElementById('debug-status').innerHTML += '<br>' + msg;
+  const box = document.getElementById('debug');
+  box.innerHTML += '<br>' + msg;
+  box.scrollTop = box.scrollHeight;
 }
 
 // ============================================
-// LIVE CLOCK
+// CLOCK
 // ============================================
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString();
-}
-setInterval(updateClock, 1000);
-updateClock();
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 1000);
 
 // ============================================
-// INITIALIZE MAP
+// VOICE ALERTS
+// ============================================
+function speak(message, priority = 'normal') {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(message);
+  u.lang = 'en-IN'; u.rate = priority === 'emergency' ? 0.82 : 0.9;
+  u.pitch = priority === 'emergency' ? 1.4 : 1.0; u.volume = 1.0;
+  window.speechSynthesis.speak(u);
+}
+function speakAfter(msg, delay, p = 'normal') { setTimeout(() => speak(msg, p), delay); }
+function testVoice() { speak('HillSafe AI is active. One hundred vehicles are being monitored on all mountain roads of Jammu and Kashmir.', 'normal'); }
+function voiceAccident(v)   { speak(`Emergency! Accident detected. Vehicle ${v.plate}. Driver ${v.name}. Blood group ${v.blood}. Rescue team alerted.`, 'emergency'); speakAfter('Ambulance dispatched. Emergency room alerted. All units respond immediately.', 5000, 'emergency'); }
+function voiceDanger(z, s)  { speak(`Alert. Vehicle entering danger zone. ${z}. Speed limit ${s} kilometers per hour. Slow down immediately.`, 'emergency'); }
+function voiceChallan(p,sp,l){ speak(`Overspeed challan issued. Vehicle ${p}. Speed ${sp}. Limit is ${l}. Fine generated automatically.`, 'emergency'); }
+function voiceReset()       { speak('All clear. Fleet reset. HillSafe AI monitoring all one hundred vehicles.', 'normal'); }
+
+// ============================================
+// MAP SETUP
 // ============================================
 debug('✅ Map initializing...');
-const map = L.map('map').setView([33.5120, 75.2000], 9);
+const map = L.map('map').setView([34.0, 75.8], 8);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: 'HillSafe AI | OpenStreetMap'
+  attribution: 'HillSafe AI v5.0 | OpenStreetMap'
 }).addTo(map);
-debug('✅ Map loaded!');
+
+// J&K Boundary
+const jkGeoJSON = {
+  type: 'Feature',
+  properties: { name: 'Jammu & Kashmir' },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [[
+      [73.75, 32.95], [74.20, 32.50], [74.80, 32.55], [75.40, 32.75],
+      [75.90, 33.10], [76.50, 33.25], [77.20, 33.50], [77.80, 33.80],
+      [78.50, 34.50], [78.80, 35.20], [78.20, 35.80], [77.50, 36.20],
+      [76.80, 36.60], [75.80, 36.90], [74.80, 36.80], [74.00, 36.50],
+      [73.50, 36.00], [73.00, 35.50], [72.50, 35.00], [72.80, 34.20],
+      [73.20, 33.50], [73.75, 32.95]
+    ]]
+  }
+};
+L.geoJSON(jkGeoJSON, {
+  style: { color: '#2e8fff', weight: 2, opacity: 0.8, fillColor: '#2e8fff', fillOpacity: 0.03, dashArray: '6, 4' }
+}).addTo(map).bindPopup('<b>📍 Jammu & Kashmir</b><br>HillSafe AI — 100 Vehicles Monitored');
+
+L.marker([36.2, 75.5], {
+  icon: L.divIcon({ html: `<div class="jk-label">📍 J&K — HillSafe AI Zone</div>`, className: '', iconAnchor: [80, 0] })
+}).addTo(map);
+
+debug('✅ J&K boundary drawn!');
 
 // ============================================
-// VEHICLE MARKERS
+// MARKER CLUSTER GROUP for 100 vehicles
 // ============================================
-const vehicleMarkers = {};
+const clusterGroup = L.markerClusterGroup({
+  maxClusterRadius: 40,
+  iconCreateFunction: function(cluster) {
+    const count = cluster.getChildCount();
+    const color = count > 20 ? '#ff3d3d' : count > 10 ? '#ff8c00' : '#2e8fff';
+    return L.divIcon({
+      html: `<div style="background:${color};color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Share Tech Mono',monospace;font-size:13px;border:2px solid white;box-shadow:0 0 8px ${color};">${count}</div>`,
+      className: '', iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+  }
+});
+map.addLayer(clusterGroup);
+debug('✅ MarkerCluster ready for 100 vehicles!');
 
-function getIcon(type) {
-  const icons = { 'Car': '🚗', 'Truck': '🚛', 'Bus': '🚌' };
-  const emoji = icons[type] || '🚗';
+// ============================================
+// ICONS
+// ============================================
+function getIcon(type, status) {
+  const emojis = { Car: '🚗', Truck: '🚛', Bus: '🚌', Bike: '🏍️' };
+  const emoji  = status === 'accident' ? '💥' : status === 'danger' ? '⚠️' : (emojis[type] || '🚗');
+  const glow   = status === 'accident' ? 'drop-shadow(0 0 6px red)' : status === 'danger' ? 'drop-shadow(0 0 4px orange)' : '';
   return L.divIcon({
-    html: `<div style="font-size:24px;">${emoji}</div>`,
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
+    html: `<div style="font-size:20px;filter:${glow};">${emoji}</div>`,
+    className: '', iconSize: [26, 26], iconAnchor: [13, 13]
   });
 }
 
 // ============================================
-// LOAD VEHICLES
+// STATE
 // ============================================
-async function loadVehicles() {
-  debug('⏳ Fetching vehicles from /vehicles ...');
+const vehicleMarkers = {};       // id → marker
+const vehicleData    = {};       // id → { plate, name, type, speed, status, zone }
+let   alertCount     = 0;
+let   challanCount   = 0;
+let   showLimit      = 30;       // show 30 cards initially
+
+// ============================================
+// LOAD INITIAL POSITIONS + BUILD MARKERS
+// ============================================
+async function loadFleet() {
+  debug('⏳ Loading 100 vehicles...');
   try {
-    const res = await fetch('/vehicles');
-    debug('✅ Response received. Status: ' + res.status);
-    const data = await res.json();
-    debug('✅ Vehicles count: ' + data.total);
-    const vehicles = data.vehicles;
+    const pRes = await fetch('/positions');
+    const pData = await pRes.json();
+    const positions = pData.positions;
 
-    document.getElementById('total-vehicles').textContent = vehicles.length;
+    debug('✅ Positions loaded: ' + Object.keys(positions).length);
 
-    const positions = [
-      [33.5120, 75.2000],
-      [34.0837, 74.7973],
-      [32.7266, 74.8570]
-    ];
+    Object.keys(positions).forEach(id => {
+      const v = positions[id];
+      vehicleData[id] = { plate: v.plate, name: v.name, type: v.type, blood: v.blood, speed: v.speed, status: v.status, zone: v.currentZone };
 
-    const list = document.getElementById('vehicles-list');
-    list.innerHTML = '';
-
-    vehicles.forEach((vehicle, i) => {
-      const pos = positions[i] || [33.5120, 75.2000];
-
-      const marker = L.marker(pos, { icon: getIcon(vehicle.vehicle_type) })
-        .addTo(map)
-        .bindPopup(`
-          <div style="font-family:Arial;min-width:180px;">
-            <b style="font-size:14px;">${vehicle.registration_number}</b>
-            <hr style="margin:6px 0;">
-            👤 <b>Owner:</b> ${vehicle.owner_name}<br>
-            📞 <b>Contact:</b> ${vehicle.owner_contact}<br>
-            🩸 <b>Blood:</b> ${vehicle.blood_group}<br>
-            🚗 <b>Type:</b> ${vehicle.vehicle_type}<br>
-            📋 <b>Insurance:</b>
-            <span style="color:${vehicle.insurance_status==='Valid'?'green':'red'}">
-              ${vehicle.insurance_status}
-            </span>
-          </div>
-        `);
-
-      vehicleMarkers[vehicle.vehicle_id] = marker;
-
-      const card = document.createElement('div');
-      card.className = 'vehicle-card';
-      card.innerHTML = `
-        <div class="plate">${vehicle.registration_number}</div>
-        <div class="owner">👤 ${vehicle.owner_name}</div>
-        <div class="type">🚗 ${vehicle.vehicle_type}</div>
-        <div class="blood">🩸 Blood: ${vehicle.blood_group}</div>
-      `;
-      card.onclick = () => {
-        map.setView(pos, 13);
-        marker.openPopup();
-      };
-      list.appendChild(card);
+      const marker = L.marker([v.lat, v.lng], { icon: getIcon(v.type, v.status) });
+      marker.bindPopup(buildPopup(id, v));
+      vehicleMarkers[id] = marker;
+      clusterGroup.addLayer(marker);
     });
 
-    debug('✅ Vehicles loaded on map!');
-
+    debug('✅ 100 markers added to cluster!');
+    renderVehicleList();
   } catch(err) {
-    debug('❌ ERROR: ' + err.message);
-    document.getElementById('vehicles-list').innerHTML =
-      '<div class="loading">❌ ' + err.message + '</div>';
+    debug('❌ Fleet error: ' + err.message);
   }
 }
 
+function buildPopup(id, v) {
+  return `
+    <div style="font-family:'Rajdhani',sans-serif;min-width:170px;">
+      <b style="font-size:14px;color:#2e8fff;">${v.plate}</b>
+      <hr style="margin:5px 0;border-color:#1a2d50;">
+      👤 ${v.name}<br>
+      🚗 ${v.type} &nbsp; 🩸 ${v.blood}<br>
+      ⚡ Speed: <b>${v.speed} km/h</b><br>
+      📍 Status: <b style="color:${v.status==='accident'?'#ff3d3d':v.status==='danger'?'#ff8c00':'#14d490'}">${v.status.toUpperCase()}</b>
+      ${v.currentZone ? `<br>⚠️ <span style="color:#ff8c00">${v.currentZone}</span>` : ''}
+    </div>`;
+}
+
 // ============================================
-// LOAD ZONES
+// RENDER VEHICLE LIST (with search + limit)
+// ============================================
+function renderVehicleList() {
+  const query = (document.getElementById('search').value || '').toLowerCase();
+  const list  = document.getElementById('vehicles-list');
+  list.innerHTML = '';
+
+  const ids = Object.keys(vehicleData);
+  const filtered = ids.filter(id => {
+    const v = vehicleData[id];
+    return !query || v.plate.toLowerCase().includes(query) || v.name.toLowerCase().includes(query);
+  });
+
+  // Sort: accident first, then danger, then normal
+  filtered.sort((a, b) => {
+    const order = { accident: 0, danger: 1, normal: 2 };
+    return (order[vehicleData[a].status] || 2) - (order[vehicleData[b].status] || 2);
+  });
+
+  const toShow = filtered.slice(0, showLimit);
+
+  toShow.forEach(id => {
+    const v   = vehicleData[id];
+    const spd = v.speed;
+    const spdClass = spd > 70 ? 'fast' : spd > 50 ? 'mid' : '';
+
+    const card = document.createElement('div');
+    card.className = `v-card ${v.status}`;
+    card.id = 'vcard-' + id;
+    card.innerHTML = `
+      <div class="v-plate">${v.plate}</div>
+      <span class="v-type-badge">${v.type}</span>
+      <div class="v-name">👤 ${v.name}</div>
+      <div class="v-speed ${spdClass}" id="spd-${id}">⚡ ${spd} km/h</div>
+      ${v.zone ? `<div class="v-zone">⚠️ ${v.zone}</div>` : `<div class="v-zone" id="zone-${id}"></div>`}
+    `;
+    card.onclick = () => {
+      const m = vehicleMarkers[id];
+      if (m) { map.setView(m.getLatLng(), 13); m.openPopup(); }
+    };
+    list.appendChild(card);
+  });
+
+  if (filtered.length > showLimit) {
+    const btn = document.createElement('button');
+    btn.className = 'show-more';
+    btn.textContent = `Show more (${filtered.length - showLimit} more vehicles)`;
+    btn.onclick = () => { showLimit += 30; renderVehicleList(); };
+    list.appendChild(btn);
+  }
+}
+
+function filterVehicles() { showLimit = 30; renderVehicleList(); }
+
+// ============================================
+// LOAD DANGER ZONES
 // ============================================
 async function loadZones() {
-  debug('⏳ Fetching zones from /zones ...');
+  debug('⏳ Loading danger zones...');
   try {
-    const res = await fetch('/zones');
-    debug('✅ Zones response status: ' + res.status);
+    const res  = await fetch('/zones');
     const data = await res.json();
-    debug('✅ Zones count: ' + data.total);
-    const zones = data.zones;
-
-    document.getElementById('total-zones').textContent = zones.length;
-
     const list = document.getElementById('zones-list');
     list.innerHTML = '';
 
-    zones.forEach(zone => {
+    data.zones.forEach(zone => {
       L.circle([zone.latitude, zone.longitude], {
-        color: '#E24B4A',
-        fillColor: '#E24B4A',
-        fillOpacity: 0.25,
-        radius: zone.radius_meters,
-        weight: 2
-      }).addTo(map)
-        .bindPopup(`
-          <div style="font-family:Arial;min-width:180px;">
-            <b style="color:red;">🔴 ${zone.zone_name}</b>
-            <hr style="margin:6px 0;">
-            ⚡ Speed Limit: ${zone.speed_limit} km/h<br>
-            ⚠️ Risk: ${zone.risk_level}<br>
-            📝 ${zone.description}
-          </div>
-        `);
+        color: '#ff3d3d', fillColor: '#ff3d3d',
+        fillOpacity: 0.15, radius: zone.radius_meters, weight: 2
+      }).addTo(map).bindPopup(`<b>🔴 ${zone.zone_name}</b><br>Limit: ${zone.speed_limit} km/h<br>Risk: ${zone.risk_level}`);
 
       L.marker([zone.latitude, zone.longitude], {
         icon: L.divIcon({
-          html: `<div style="background:#E24B4A;color:white;padding:3px 8px;
-                 border-radius:4px;font-size:11px;font-weight:bold;">
-                 🔴 ${zone.zone_name}</div>`,
-          className: '',
-          iconAnchor: [60, 0]
+          html: `<div style="background:#ff3d3d;color:white;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;white-space:nowrap;font-family:'Rajdhani',sans-serif;">🔴 ${zone.zone_name}</div>`,
+          className: '', iconAnchor: [60, 0]
         })
       }).addTo(map);
 
       const card = document.createElement('div');
-      card.className = 'zone-card';
-      card.innerHTML = `
-        <div class="zone-name">🔴 ${zone.zone_name}</div>
-        <div class="zone-info">⚡ Max: ${zone.speed_limit} km/h</div>
-        <div class="zone-info">⚠️ Risk: ${zone.risk_level}</div>
-      `;
+      card.className = 'z-card';
+      card.innerHTML = `<div class="z-name">🔴 ${zone.zone_name}</div><div class="z-info">⚡ Max: ${zone.speed_limit} km/h | ⚠️ ${zone.risk_level}</div>`;
       list.appendChild(card);
     });
 
-    debug('✅ Zones loaded on map!');
-
+    debug('✅ Zones loaded: ' + data.zones.length);
   } catch(err) {
-    debug('❌ ZONES ERROR: ' + err.message);
-    document.getElementById('zones-list').innerHTML =
-      '<div class="loading">❌ ' + err.message + '</div>';
+    debug('❌ Zones error: ' + err.message);
   }
 }
 
 // ============================================
+// ALERTS
+// ============================================
+function addAlert(msg, type = 'danger') {
+  alertCount++;
+  document.getElementById('alert-count').textContent = alertCount;
+  const list = document.getElementById('alerts-list');
+  const item = document.createElement('div');
+  item.className = `alert-item ${type}`;
+  item.innerHTML = `<div class="alert-time">${new Date().toLocaleTimeString()}</div>${msg}`;
+  list.insertBefore(item, list.firstChild);
+  if (list.children.length > 15) list.removeChild(list.lastChild);
+}
+
+// ============================================
+// UPDATE FLEET STATS
+// ============================================
+function updateStats() {
+  let normal = 0, danger = 0, accident = 0;
+  Object.values(vehicleData).forEach(v => {
+    if (v.status === 'accident') accident++;
+    else if (v.status === 'danger') danger++;
+    else normal++;
+  });
+  const total = normal + danger + accident;
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-normal').textContent   = normal;
+  document.getElementById('stat-danger').textContent   = danger;
+  document.getElementById('stat-accident').textContent = accident;
+  document.getElementById('chip-normal').textContent   = normal;
+  document.getElementById('chip-danger').textContent   = danger;
+  document.getElementById('chip-accident').textContent = accident;
+  document.getElementById('chip-challans').textContent = challanCount;
+}
+
+// ============================================
+// DEMO CONTROLS
+// ============================================
+async function simulateAccident(id) {
+  try {
+    const res  = await fetch(`/simulate-accident/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) { debug('❌ ' + data.error); return; }
+    debug('🚨 Accident triggered: Vehicle ' + id);
+  } catch(err) {
+    debug('❌ ' + err.message);
+  }
+}
+
+async function massAccident() {
+  try {
+    const res  = await fetch('/simulate-mass-accident', { method: 'POST' });
+    const data = await res.json();
+    addAlert(`💥 MASS ACCIDENT — ${data.count} vehicles involved!`, 'danger');
+    debug('💥 Mass accident: ' + data.count + ' vehicles');
+  } catch(err) {
+    debug('❌ ' + err.message);
+  }
+}
+
+async function resetAll() {
+  try {
+    await fetch('/reset-all', { method: 'POST' });
+    addAlert('✅ All vehicles reset to normal', 'info');
+    voiceReset();
+    debug('✅ All vehicles reset');
+  } catch(err) {
+    debug('❌ ' + err.message);
+  }
+}
+
+async function viewChallans() {
+  try {
+    const res  = await fetch('/challans');
+    const data = await res.json();
+    addAlert(`💸 ${data.total} auto-challans generated`, 'challan');
+    debug('💸 Challans: ' + data.total);
+  } catch(err) {
+    debug('❌ ' + err.message);
+  }
+}
+
+// ============================================
+// SOCKET.IO — LIVE UPDATES FOR 100 VEHICLES
+// ============================================
+debug('📡 Connecting Socket.io...');
+const socket = io();
+
+socket.on('connect', () => {
+  debug('📡 Socket.io LIVE — 100 vehicles tracked!');
+  addAlert('📡 Live tracking connected — 100 vehicles active', 'info');
+  speak('HillSafe AI version five connected. One hundred vehicles are now being tracked live across Jammu and Kashmir.', 'normal');
+});
+
+// Batch DOM updates — only re-render list every 3 ticks (6s)
+let ticksSinceRender = 0;
+
+socket.on('vehicleUpdate', (positions) => {
+  Object.keys(positions).forEach(id => {
+    const v      = positions[id];
+    const marker = vehicleMarkers[id];
+
+    if (marker) {
+      marker.setLatLng([v.lat, v.lng]);
+      marker.setIcon(getIcon(v.type, v.status));
+      marker.setPopupContent(buildPopup(id, v));
+    }
+
+    // Update local data store
+    vehicleData[id] = {
+      plate:  v.plate,
+      name:   v.name,
+      type:   v.type,
+      blood:  v.blood,
+      speed:  v.speed,
+      status: v.status,
+      zone:   v.currentZone
+    };
+
+    // Live-update visible card if rendered (fast path)
+    const spdEl  = document.getElementById('spd-' + id);
+    const zoneEl = document.getElementById('zone-' + id);
+    const card   = document.getElementById('vcard-' + id);
+    if (spdEl) {
+      spdEl.textContent = `⚡ ${v.speed} km/h`;
+      spdEl.className   = `v-speed${v.speed > 70 ? ' fast' : v.speed > 50 ? ' mid' : ''}`;
+    }
+    if (zoneEl) zoneEl.textContent = v.currentZone ? `⚠️ ${v.currentZone}` : '';
+    if (card)   card.className = `v-card ${v.status}`;
+  });
+
+  updateStats();
+
+  // Re-render vehicle list every 3 socket ticks
+  ticksSinceRender++;
+  if (ticksSinceRender >= 3) {
+    ticksSinceRender = 0;
+    const q = document.getElementById('search').value;
+    if (!q) renderVehicleList(); // only re-sort if no active search
+  }
+});
+
+socket.on('dangerZoneAlert', (data) => {
+  addAlert(`⚠️ ${data.vehicle.plate} → ${data.zone.name} | Limit: ${data.zone.speedLimit} km/h`, 'warning');
+  challanCount++;
+  document.getElementById('chip-challans').textContent = challanCount;
+  addAlert(`💸 Auto-challan: ${data.vehicle.plate} overspeed in ${data.zone.name}`, 'challan');
+  voiceDanger(data.zone.name, data.zone.speedLimit);
+  speakAfter(() => voiceChallan(data.vehicle.plate, data.vehicle.speed, data.zone.speedLimit), 4000);
+});
+
+socket.on('accidentAlert', (data) => {
+  addAlert(`🚨 ACCIDENT — ${data.vehicle.plate} — ${data.vehicle.name} — 🩸 ${data.vehicle.blood}`, 'danger');
+  voiceAccident(data.vehicle);
+});
+
+socket.on('disconnect', () => debug('❌ Socket disconnected'));
+
+// ============================================
 // START
 // ============================================
-debug('🚀 HillSafe AI Dashboard starting...');
-loadVehicles();
+debug('🚀 HillSafe AI v5.0 — Initializing...');
+loadFleet();
 loadZones();
 </script>
-
 </body>
 </html>
