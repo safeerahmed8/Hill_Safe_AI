@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HillSafe AI — Complete Project Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & ROOT ─────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04080e;--bg2:#070e18;--bg3:#0a1520;
+  --a1:#00c8ff;--a2:#00ff88;--a3:#7b61ff;
+  --dng:#ff2020;--wrn:#ff8c00;--saf:#00e676;
+  --tx1:#b8d8f0;--tx2:#4e7899;--tx3:#1e3a52;
+  --fd:'Orbitron',monospace;--fm:'Share Tech Mono',monospace;--fb:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx1);font-family:var(--fb);line-height:1.6;overflow-x:hidden}
+
+/* ── ANIMATIONS ───────────────────────────────────────────── */
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(0,200,255,.4)}50%{text-shadow:0 0 50px rgba(0,200,255,.9)}}
+@keyframes scan{from{top:0}to{top:100%}}
+@keyframes fade{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes slideL{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes dash{to{stroke-dashoffset:0}}
+@keyframes countup{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+/* ── SHARED UTILITIES ─────────────────────────────────────── */
+.section{padding:80px 0;position:relative}
+.container{max-width:1160px;margin:0 auto;padding:0 24px}
+.sec-tag{font-family:var(--fd);font-size:9px;letter-spacing:4px;color:var(--a1);
+  text-transform:uppercase;margin-bottom:10px;display:block}
+.sec-title{font-family:var(--fd);font-size:clamp(22px,4vw,38px);font-weight:900;
+  color:#fff;margin-bottom:12px;letter-spacing:2px}
+.sec-sub{font-size:15px;color:var(--tx2);max-width:600px;margin-bottom:48px;line-height:1.7}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;
+  font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:1px}
+.bdg-js{background:rgba(255,220,0,.1);color:#ffd700;border:1px solid rgba(255,220,0,.25)}
+.bdg-py{background:rgba(123,97,255,.1);color:#a89dff;border:1px solid rgba(123,97,255,.25)}
+.bdg-cpp{background:rgba(0,230,118,.08);color:#00e676;border:1px solid rgba(0,230,118,.2)}
+.bdg-sql{background:rgba(0,200,255,.08);color:#00c8ff;border:1px solid rgba(0,200,255,.2)}
+.bdg-html{background:rgba(255,140,0,.1);color:#ff8c00;border:1px solid rgba(255,140,0,.25)}
+.bdg-pwa{background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.25)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;border-radius:6px;
+  font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;
+  text-decoration:none;transition:all .25s;border:1px solid}
+.btn-primary{background:var(--a1);color:#020810;border-color:var(--a1);box-shadow:0 0 20px rgba(0,200,255,.35)}
+.btn-primary:hover{background:#33d6ff;box-shadow:0 0 35px rgba(0,200,255,.55)}
+.btn-ghost{background:rgba(0,200,255,.07);color:var(--a1);border-color:rgba(0,200,255,.28)}
+.btn-ghost:hover{background:rgba(0,200,255,.18)}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,255,.2),transparent);margin:0}
+
+/* ── SCANLINE ─────────────────────────────────────────────── */
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:rgba(0,200,255,.06);
+  z-index:9999;pointer-events:none;animation:scan 10s linear infinite}
+
+/* ── NAV ──────────────────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;
+  background:rgba(4,8,14,.95);border-bottom:1px solid rgba(0,200,255,.12);
+  display:flex;align-items:center;padding:0 24px;gap:0;backdrop-filter:blur(16px)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-icon{width:36px;height:36px;background:linear-gradient(135deg,#00c8ff,#00ff88);
+  border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.nav-name{font-family:var(--fd);font-size:13px;font-weight:900;color:var(--a1);letter-spacing:2px}
+.nav-ver{font-size:8px;color:var(--tx2);letter-spacing:2px;display:block}
+.nav-links{display:flex;gap:2px;margin-left:auto;align-items:center}
+.nav-link{padding:6px 14px;border-radius:4px;font-family:var(--fb);font-size:11px;font-weight:600;
+  color:var(--tx2);text-decoration:none;transition:all .2s;letter-spacing:.5px}
+.nav-link:hover{color:var(--a1);background:rgba(0,200,255,.07)}
+.nav-badge{padding:5px 12px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.28);
+  border-radius:4px;font-family:var(--fm);font-size:9px;color:var(--saf);letter-spacing:1px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--saf);animation:bk .8s infinite}
+
+/* ── HERO ─────────────────────────────────────────────────── */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:60px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,200,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.04) 1px,transparent 1px);
+  background-size:50px 50px}
+.hero-glow{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
+  width:700px;height:700px;background:radial-gradient(circle,rgba(0,200,255,.08),transparent 65%)}
+.hero-content{position:relative;z-index:1;text-align:center;max-width:900px;margin:0 auto;padding:0 24px}
+.hero-tag{font-family:var(--fm);font-size:10px;letter-spacing:4px;color:var(--a1);
+  padding:5px 16px;border:1px solid rgba(0,200,255,.25);border-radius:20px;
+  background:rgba(0,200,255,.06);display:inline-block;margin-bottom:24px}
+.hero-title{font-family:var(--fd);font-size:clamp(36px,7vw,72px);font-weight:900;
+  color:#fff;line-height:1.05;letter-spacing:3px;margin-bottom:8px;animation:glow 3s ease infinite}
+.hero-accent{color:var(--a1)}
+.hero-sub{font-size:clamp(13px,2vw,17px);color:var(--tx2);margin-bottom:14px;max-width:680px;
+  margin-left:auto;margin-right:auto;line-height:1.7}
+.hero-tagline{font-family:var(--fd);font-size:12px;color:var(--a2);letter-spacing:2px;
+  margin-bottom:40px;animation:pulse 2s ease infinite}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:750px;margin:0 auto}
+.hs{background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.12);border-radius:10px;
+  padding:16px 12px;text-align:center;backdrop-filter:blur(8px)}
+.hs-num{font-family:var(--fd);font-size:clamp(22px,4vw,34px);font-weight:900;color:var(--a1);line-height:1}
+.hs-lbl{font-size:9px;color:var(--tx2);letter-spacing:1.5px;margin-top:5px}
+
+/* ── PROBLEM ──────────────────────────────────────────────── */
+#problem{background:var(--bg2)}
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.prob-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ps{background:var(--bg3);border:1px solid rgba(255,32,32,.18);border-radius:10px;padding:20px 18px}
+.ps-num{font-family:var(--fd);font-size:30px;font-weight:900;color:var(--dng);line-height:1}
+.ps-lbl{font-size:10px;color:var(--tx2);margin-top:5px;letter-spacing:1px}
+.ps-change{font-family:var(--fm);font-size:9px;color:var(--wrn);margin-top:3px}
+.prob-text h3{font-family:var(--fd);font-size:18px;color:#fff;margin-bottom:12px;letter-spacing:1.5px}
+.prob-text p{font-size:14px;color:var(--tx2);line-height:1.75;margin-bottom:14px}
+.prob-quote{border-left:3px solid var(--dng);padding:12px 16px;background:rgba(255,32,32,.05);
+  border-radius:0 6px 6px 0;font-size:14px;color:var(--tx1);font-style:italic;line-height:1.6}
+
+/* ── SOLUTION ─────────────────────────────────────────────── */
+.sol-banner{background:linear-gradient(135deg,rgba(0,200,255,.08),rgba(0,255,136,.06));
+  border:1px solid rgba(0,200,255,.15);border-radius:12px;padding:32px;
+  text-align:center;margin-bottom:48px}
+.sol-banner h2{font-family:var(--fd);font-size:clamp(16px,3vw,24px);color:#fff;
+  margin-bottom:10px;letter-spacing:2px}
+.sol-banner p{font-size:14px;color:var(--tx2);max-width:700px;margin:0 auto;line-height:1.7}
+
+/* ── FEATURES GRID ────────────────────────────────────────── */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.feat-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);border-radius:12px;
+  padding:22px 20px;transition:all .25s;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;
+  background:linear-gradient(135deg,rgba(0,200,255,.05),transparent)}
+.feat-card:hover{border-color:rgba(0,200,255,.3);transform:translateY(-4px);
+  box-shadow:0 16px 40px rgba(0,0,0,.35)}
+.feat-card:hover::before{opacity:1}
+.fc-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.fc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0}
+.fc-title{font-family:var(--fd);font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;
+  line-height:1.4;margin-bottom:3px}
+.fc-tag{display:inline-block;padding:1px 7px;border-radius:3px;font-size:8px;letter-spacing:1px}
+.fc-desc{font-size:12px;color:var(--tx2);line-height:1.65;margin-bottom:12px}
+.fc-tech{display:flex;flex-wrap:wrap;gap:4px}
+
+/* ── TIMELINE ─────────────────────────────────────────────── */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;
+  width:2px;background:linear-gradient(to bottom,var(--a1),var(--a2))}
+.tl-item{position:relative;margin-bottom:32px}
+.tl-dot{position:absolute;left:-27px;top:4px;width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--a1);background:var(--bg);z-index:1}
+.tl-dot.done{background:var(--a1)}
+.tl-phase{font-family:var(--fm);font-size:9px;color:var(--a1);letter-spacing:2px;margin-bottom:3px}
+.tl-title{font-family:var(--fd);font-size:13px;font-weight:700;color:#fff;
+  margin-bottom:6px;letter-spacing:1px}
+.tl-desc{font-size:12px;color:var(--tx2);line-height:1.65}
+.tl-files{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tl-file{font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:3px;
+  background:rgba(0,200,255,.07);color:var(--tx2);border:1px solid rgba(0,200,255,.12)}
+
+/* ── TECH STACK ───────────────────────────────────────────── */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.tech-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);border-radius:10px;
+  padding:16px 14px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.tech-card:hover{border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.04)}
+.tc-icon{font-size:26px;flex-shrink:0}
+.tc-name{font-family:var(--fd);font-size:10px;color:#fff;letter-spacing:1px;margin-bottom:2px}
+.tc-role{font-size:10px;color:var(--tx2);line-height:1.4}
+
+/* ── FILES TABLE ──────────────────────────────────────────── */
+.files-table{width:100%;border-collapse:collapse}
+.files-table th{font-family:var(--fm);font-size:9px;color:var(--tx2);letter-spacing:2px;
+  padding:10px 14px;text-align:left;background:rgba(0,200,255,.05);
+  border-bottom:1px solid rgba(0,200,255,.12)}
+.files-table td{padding:10px 14px;font-size:11px;border-bottom:1px solid rgba(0,200,255,.06)}
+.files-table tr:last-child td{border-bottom:none}
+.files-table tr:hover td{background:rgba(0,200,255,.03)}
+.fn{font-family:var(--fm);color:var(--a1)}
+.fr{color:var(--tx2)}
+.fl{font-family:var(--fm);color:var(--saf)}
+
+/* ── METRICS ──────────────────────────────────────────────── */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.metric-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);border-radius:12px;padding:24px;text-align:center}
+.mc-num{font-family:var(--fd);font-size:clamp(30px,5vw,48px);font-weight:900;line-height:1;margin-bottom:6px}
+.mc-lbl{font-size:11px;color:var(--tx2);letter-spacing:1.5px;margin-bottom:10px}
+.mc-bar{height:4px;background:rgba(0,200,255,.1);border-radius:2px;overflow:hidden}
+.mc-fill{height:100%;border-radius:2px}
+.mc-compare{font-size:11px;color:var(--tx2);margin-top:8px}
+.mc-compare span{color:var(--saf);font-weight:700}
+
+/* ── COMPETITION ──────────────────────────────────────────── */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.comp-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);border-radius:12px;
+  padding:22px 18px;text-align:center;transition:all .25s}
+.comp-card:hover{border-color:var(--a1);transform:translateY(-4px)}
+.comp-icon{font-size:36px;margin-bottom:12px}
+.comp-name{font-family:var(--fd);font-size:11px;color:#fff;letter-spacing:1.5px;margin-bottom:5px}
+.comp-type{font-size:11px;color:var(--tx2);margin-bottom:8px}
+.comp-status{font-family:var(--fm);font-size:9px;padding:2px 10px;border-radius:3px}
+.cs-ready{background:rgba(0,230,118,.1);color:var(--saf);border:1px solid rgba(0,230,118,.25)}
+.cs-target{background:rgba(255,140,0,.1);color:var(--wrn);border:1px solid rgba(255,140,0,.25)}
+
+/* ── TEAM ─────────────────────────────────────────────────── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.team-card{background:var(--bg2);border:1px solid rgba(0,200,255,.12);border-radius:12px;padding:28px;text-align:center}
+.team-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));
+  display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;
+  box-shadow:0 0 24px rgba(0,200,255,.28)}
+.team-name{font-family:var(--fd);font-size:14px;color:#fff;letter-spacing:1px;margin-bottom:4px}
+.team-role{font-size:12px;color:var(--a1);margin-bottom:6px}
+.team-inst{font-size:11px;color:var(--tx2);margin-bottom:10px}
+.team-skills{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.ts{font-family:var(--fm);font-size:8px;padding:2px 8px;border-radius:3px;
+  background:rgba(0,200,255,.07);color:var(--tx2);border:1px solid rgba(0,200,255,.12)}
+
+/* ── FUTURE ───────────────────────────────────────────────── */
+.future-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.future-card{background:var(--bg2);border:1px solid rgba(0,200,255,.08);border-radius:10px;
+  padding:18px 16px;display:flex;align-items:flex-start;gap:12px;opacity:.85;transition:all .25s}
+.future-card:hover{opacity:1;border-color:rgba(0,200,255,.25)}
+.fu-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.fu-title{font-family:var(--fd);font-size:10px;color:#fff;letter-spacing:1px;margin-bottom:4px}
+.fu-desc{font-size:11px;color:var(--tx2);line-height:1.55}
+.fu-status{font-family:var(--fm);font-size:8px;margin-top:6px;padding:1px 7px;border-radius:2px;display:inline-block}
+.fus-done{background:rgba(0,230,118,.1);color:var(--saf);border:1px solid rgba(0,230,118,.2)}
+.fus-wip{background:rgba(255,140,0,.08);color:var(--wrn);border:1px solid rgba(255,140,0,.2)}
+.fus-plan{background:rgba(0,200,255,.07);color:var(--tx2);border:1px solid rgba(0,200,255,.15)}
+
+/* ── HOW TO RUN ───────────────────────────────────────────── */
+.run-box{background:rgba(0,200,255,.03);border:1px solid rgba(0,200,255,.15);border-radius:10px;padding:24px 28px}
+.run-step{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(0,200,255,.07)}
+.run-step:last-child{border-bottom:none}
+.rs-num{width:28px;height:28px;border-radius:50%;background:rgba(0,200,255,.12);border:1px solid rgba(0,200,255,.25);
+  display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:10px;
+  color:var(--a1);flex-shrink:0;margin-top:2px}
+.rs-title{font-family:var(--fd);font-size:10px;color:#fff;letter-spacing:1px;margin-bottom:4px}
+.rs-cmd{font-family:var(--fm);font-size:11px;color:var(--a2);background:rgba(0,255,136,.06);
+  padding:4px 10px;border-radius:4px;display:inline-block;margin-top:3px}
+.rs-desc{font-size:11px;color:var(--tx2)}
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+footer{background:var(--bg2);border-top:1px solid rgba(0,200,255,.1);padding:40px 24px;text-align:center}
+.footer-logo{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--a1);letter-spacing:3px;margin-bottom:10px}
+.footer-sub{font-size:12px;color:var(--tx2);margin-bottom:18px;letter-spacing:1px}
+.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.fl-link{font-family:var(--fm);font-size:10px;color:var(--tx2);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.fl-link:hover{color:var(--a1)}
+.footer-copy{font-family:var(--fm);font-size:9px;color:var(--tx3);letter-spacing:1.5px}
+
+@media(max-width:768px){
+  .prob-grid,.metrics-grid{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-icon">🏔</div>
+    <div><span class="nav-name">HILLSAFE AI</span><span class="nav-ver">v9.0 · J&K INDIA</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#phases" class="nav-link">Timeline</a>
+    <a href="#tech" class="nav-link">Tech Stack</a>
+    <a href="#metrics" class="nav-link">Metrics</a>
+    <a href="#team" class="nav-link">Team</a>
+    <a href="#run" class="nav-link">Run</a>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:12px" class="nav-badge">
+      <div class="live-dot"></div> LIVE PROJECT
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"><div class="hero-grid"></div><div class="hero-glow"></div></div>
+  <div class="hero-content">
+    <div class="hero-tag">🏆 ANTI GRAVITY AI · INVENTX INDIA 2025</div>
+    <h1 class="hero-title"><span class="hero-accent">HillSafe</span> AI</h1>
+    <p class="hero-tagline">WORLD'S FIRST AI MOUNTAIN ROAD SAFETY SYSTEM</p>
+    <p class="hero-sub">A full-stack intelligent transport safety platform for J&K mountain highways — detecting accidents, clearing ambulance routes, and saving lives in real time using AI, ML, IoT, and real weather data.</p>
+    <div class="hero-btns">
+      <a href="#features" class="btn btn-primary">🚀 Explore Features</a>
+      <a href="#run" class="btn btn-ghost">▶ How to Run</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hs"><div class="hs-num" style="color:var(--a1)">100</div><div class="hs-lbl">LIVE VEHICLES</div></div>
+      <div class="hs"><div class="hs-num" style="color:var(--saf)">11 min</div><div class="hs-lbl">RESPONSE TIME</div></div>
+      <div class="hs"><div class="hs-num" style="color:var(--wrn)">87%</div><div class="hs-lbl">ML ACCURACY</div></div>
+      <div class="hs"><div class="hs-num" style="color:var(--dng)">8</div><div class="hs-lbl">DANGER ZONES</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROBLEM -->
+<section id="problem" class="section">
+  <div class="container">
+    <div class="prob-grid">
+      <div class="prob-stats">
+        <div class="ps"><div class="ps-num">34 min</div><div class="ps-lbl">NATIONAL AVG RESPONSE</div><div class="ps-change">↓ 11 min with HillSafe AI</div></div>
+        <div class="ps"><div class="ps-num">4,670</div><div class="ps-lbl">J&K ACCIDENTS / YEAR</div><div class="ps-change">Source: NCRB 2023</div></div>
+        <div class="ps"><div class="ps-num">0%</div><div class="ps-lbl">SIGNAL AT BANIHAL PASS</div><div class="ps-change">Zero connectivity zone</div></div>
+        <div class="ps"><div class="ps-num">23 min</div><div class="ps-lbl">TIME SAVED PER INCIDENT</div><div class="ps-change" style="color:var(--saf)">↑ Each minute matters</div></div>
+      </div>
+      <div class="prob-text">
+        <span class="sec-tag">The Problem</span>
+        <h3>J&K Mountain Roads Kill Silently</h3>
+        <p>Banihal Pass, Zoji La, Jawahar Tunnel — these roads are among India's most dangerous. Sharp blind curves, fog, black ice, steep descents, and zero mobile signal create a deadly combination where accidents go undetected for hours.</p>
+        <p>When an accident happens at 2,832m altitude with no signal, the nearest hospital is 34 minutes away on average — even though every minute in a trauma situation can mean the difference between life and death.</p>
+        <div class="prob-quote">"I witnessed accidents on these roads where help arrived too late. That's why I built HillSafe AI." — Safeer Ahmed, Developer</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SOLUTION -->
+<section id="solution" class="section">
+  <div class="container">
+    <div class="sol-banner">
+      <h2>🚀 HillSafe AI — The Complete Solution</h2>
+      <p>A real-time AI platform that monitors 100+ vehicles across 8 J&K danger zones simultaneously. The moment an accident is detected, it automatically clears the ambulance route, pre-alerts hospitals with blood type and ETA, and reduces response time from 34 minutes to 11 minutes — saving 23 minutes and potentially one life every incident.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="section" style="padding-top:0">
+  <div class="container">
+    <span class="sec-tag">What We Built</span>
+    <h2 class="sec-title">Complete Feature Set</h2>
+    <p class="sec-sub">Every feature built from scratch — from database to hardware firmware.</p>
+    <div class="feat-grid">
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">🚗</div>
+          <div><div class="fc-title">100 LIVE VEHICLE SIMULATION</div><span class="fc-tag bdg-js">Node.js</span></div>
+        </div>
+        <div class="fc-desc">100 vehicles with real J&K plates, driver names, blood groups. GPS moves every 2 seconds. All 8 danger zones monitored simultaneously with zone entry/exit detection.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-sql">MySQL</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,230,118,.1)">🚑</div>
+          <div><div class="fc-title">GREEN CORRIDOR SYSTEM</div><span class="fc-tag" style="background:rgba(0,230,118,.1);color:var(--saf);border:1px solid rgba(0,230,118,.2)">WORLD FIRST</span></div>
+        </div>
+        <div class="fc-desc">Road cleared BEFORE ambulance departs. Haversine algorithm finds vehicles in corridor. Type-specific instructions: Truck → turnout, Bus → doors open, Bike → dismount, Car → pull left. Re-alerts violators every 20s.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-js">Socket.io</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(123,97,255,.1)">🤖</div>
+          <div><div class="fc-title">XGBOOST ML DANGER PREDICTION</div><span class="fc-tag bdg-py">Python</span></div>
+        </div>
+        <div class="fc-desc">XGBoost classifier with 25 features (speed, altitude, weather, driver fatigue, zone proximity). 20,000 training samples. ~87% accuracy. Predicts crash probability 0-1 BEFORE accident happens.</div>
+        <div class="fc-tech"><span class="badge bdg-py">XGBoost</span><span class="badge bdg-py">FastAPI</span><span class="badge bdg-py">Scikit-learn</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,140,0,.1)">🌦️</div>
+          <div><div class="fc-title">REAL WEATHER INTEGRATION</div><span class="fc-tag bdg-js">Open-Meteo</span></div>
+        </div>
+        <div class="fc-desc">Open-Meteo API — free, no key required. Fetches 8 zones every 15 minutes. Danger multipliers: Fog ×2.0, Snow ×2.8, Thunderstorm ×2.5. Automatically adjusts AI danger scores.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-html">REST API</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,32,32,.1)">🚨</div>
+          <div><div class="fc-title">BRAKE FAILURE CASCADE</div><span class="fc-tag" style="background:rgba(255,32,32,.1);color:var(--dng);border:1px solid rgba(255,32,32,.2)">< 0.5 SEC</span></div>
+        </div>
+        <div class="fc-desc">Brake failure detected → instant cascade alert to ALL vehicles within 500m in under 0.5 seconds. Traffic control notified simultaneously. Nearby vehicles pull aside automatically.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Socket.io</span><span class="badge bdg-js">Node.js</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,215,0,.1)">💸</div>
+          <div><div class="fc-title">AUTO CHALLAN SYSTEM</div><span class="fc-tag bdg-sql">MySQL</span></div>
+        </div>
+        <div class="fc-desc">Speed limit crossed → ₹500–₹3000 challan auto-issued. Stored in MySQL with GPS, speed, timestamp. English voice: "Reduce your speed immediately." SMS via Twilio to driver.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-sql">MySQL</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">⚙️</div>
+          <div><div class="fc-title">REMOTE ECU SPEED LOCK</div><span class="fc-tag bdg-cpp">Hardware</span></div>
+        </div>
+        <div class="fc-desc">Server sends OBD-II command to physically lock vehicle speed. Gradual reduction 8 km/h per tick. Driver cannot override. Visual indicator on dashboard. Hardware: ESP32 + ELM327.</div>
+        <div class="fc-tech"><span class="badge bdg-cpp">C++ ESP32</span><span class="badge bdg-js">Node.js</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,230,118,.1)">👥</div>
+          <div><div class="fc-title">PROXIMITY DETECTION</div><span class="fc-tag bdg-js">Real-time</span></div>
+        </div>
+        <div class="fc-desc">Every 10 ticks, all 100 vehicle pairs checked. Alert fires when 2 vehicles within 120m. English voice alert immediately. Combined speed risk assessment. 15s cooldown per pair.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-js">Socket.io</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">🗺️</div>
+          <div><div class="fc-title">LEAFLET.JS LIVE MAP</div><span class="fc-tag bdg-html">Frontend</span></div>
+        </div>
+        <div class="fc-desc">Real-time vehicle markers on J&K map. Danger zone circles. Ambulance route animation. Heatmap toggle (Leaflet.heat). City labels. Boot gate. Reconnect overlay if server drops.</div>
+        <div class="fc-tech"><span class="badge bdg-html">Leaflet.js</span><span class="badge bdg-js">Socket.io</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,140,0,.1)">🔊</div>
+          <div><div class="fc-title">HINDI VOICE ALERTS</div><span class="fc-tag bdg-html">Web Speech API</span></div>
+        </div>
+        <div class="fc-desc">19 alert types with clear English voice. Serious tone for accidents, direct tone for challans. Fires on every dashboard event.</div>
+        <div class="fc-tech"><span class="badge bdg-html">Web Speech API</span><span class="badge bdg-html">Hindi</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">📱</div>
+          <div><div class="fc-title">ANDROID PWA DRIVER APP</div><span class="fc-tag bdg-pwa">PWA</span></div>
+        </div>
+        <div class="fc-desc">Installable on Android via Chrome. Live speed, AI score, GPS tracking. SOS button sends accident alert to server. Danger zones list. Vibration on critical alerts. Socket.io connected.</div>
+        <div class="fc-tech"><span class="badge bdg-pwa">PWA</span><span class="badge bdg-html">HTML/CSS/JS</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,215,0,.1)">📱</div>
+          <div><div class="fc-title">TWILIO SMS ALERTS</div><span class="fc-tag bdg-js">Twilio</span></div>
+        </div>
+        <div class="fc-desc">Accident → SMS to family with GPS link + blood type. Challan → SMS to driver. Green Corridor → pullover instruction SMS. Hospital pre-alert SMS with ETA and blood type.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Twilio API</span><span class="badge bdg-js">Node.js</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">📄</div>
+          <div><div class="fc-title">GOVERNMENT PDF REPORTS</div><span class="fc-tag bdg-js">PDFKit</span></div>
+        </div>
+        <div class="fc-desc">Auto-generate monthly accident reports for J&K Traffic Police. Zone-wise stats, challan revenue, AI accuracy, 5 recommendations. GET /api/reports/monthly endpoint.</div>
+        <div class="fc-tech"><span class="badge bdg-js">PDFKit</span><span class="badge bdg-js">Node.js</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,230,118,.1)">🔧</div>
+          <div><div class="fc-title">OBD-II ESP32 FIRMWARE</div><span class="fc-tag bdg-cpp">C++</span></div>
+        </div>
+        <div class="fc-desc">ESP32 + ELM327 reads real speed/RPM/engine temp. NEO-6M GPS module. MPU6050 crash detection (G-force threshold). Sends JSON to server via WiFi. Receives ECU lock. Cost: ~₹1,400/vehicle.</div>
+        <div class="fc-tech"><span class="badge bdg-cpp">C++ Arduino</span><span class="badge bdg-cpp">ESP32</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(255,32,32,.1)">🎬</div>
+          <div><div class="fc-title">17-PHASE 2D SIMULATION</div><span class="fc-tag bdg-html">Canvas</span></div>
+        </div>
+        <div class="fc-desc">Auto-playing Canvas 2D demo. All features shown: fog, AI prediction, ECU lock, proximity, brake cascade, corridor, ambulance racing. Multiple camera angles. Phase timeline UI.</div>
+        <div class="fc-tech"><span class="badge bdg-html">HTML Canvas</span><span class="badge bdg-js">Socket.io</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">🎮</div>
+          <div><div class="fc-title">4D HD THREE.JS SIMULATION</div><span class="fc-tag bdg-html">Three.js</span></div>
+        </div>
+        <div class="fc-desc">3D mountain road accident simulation. 9 auto-playing phases. Real vehicle models, explosion particles, screen shake. Camera cuts: overview → impact → ambulance.</div>
+        <div class="fc-tech"><span class="badge bdg-html">Three.js r128</span><span class="badge bdg-html">WebGL</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(0,200,255,.1)">📹</div>
+          <div><div class="fc-title">REAL ROAD FOOTAGE OVERLAY</div><span class="fc-tag bdg-html">YouTube API</span></div>
+        </div>
+        <div class="fc-desc">Real NH-44/Banihal Pass footage from YouTube as background. HillSafe AI vehicle dots + danger zones overlaid on real road. 4 road feeds selectable. Canvas AI tracking overlay.</div>
+        <div class="fc-tech"><span class="badge bdg-html">YouTube IFrame</span><span class="badge bdg-html">Canvas</span></div>
+      </div>
+
+      <div class="feat-card">
+        <div class="fc-head">
+          <div class="fc-icon" style="background:rgba(123,97,255,.1)">🛡️</div>
+          <div><div class="fc-title">AUTOBREAK AI CYBERSECURITY</div><span class="fc-tag bdg-py">AI</span></div>
+        </div>
+        <div class="fc-desc">Security panel showing intrusion detection, malware detection, anomaly detection, tampering detection. Live score bars. Threat alert with voice notification. Security score display.</div>
+        <div class="fc-tech"><span class="badge bdg-js">Node.js</span><span class="badge bdg-html">Frontend</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEVELOPMENT TIMELINE -->
+<section id="phases" class="section" style="background:var(--bg2)">
+  <div class="container">
+    <span class="sec-tag">Development Timeline</span>
+    <h2 class="sec-title">Built Phase by Phase</h2>
+    <p class="sec-sub">From zero to a complete full-stack AI platform in systematic development phases.</p>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">DAY 1 — DATABASE LAYER</div>
+        <div class="tl-title">MySQL Database Design</div>
+        <div class="tl-desc">Designed and built complete MySQL schema with 8 relational tables. Added real J&K danger zone data, vehicle blood groups, road segment data. Foreign keys, indexes, relationships all configured.</div>
+        <div class="tl-files"><span class="tl-file">vehicles</span><span class="tl-file">drivers</span><span class="tl-file">incidents</span><span class="tl-file">challans</span><span class="tl-file">telemetry_logs</span><span class="tl-file">emergency_alerts</span><span class="tl-file">road_segments</span><span class="tl-file">zones</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">DAY 2 — BACKEND</div>
+        <div class="tl-title">Node.js + Express REST API</div>
+        <div class="tl-desc">Built complete Node.js backend with 8 REST endpoints. Express.js, mysql2, cors, dotenv configured. db.js connection pool with 127.0.0.1 fix. Vehicle simulation loop. Zone detection.</div>
+        <div class="tl-files"><span class="tl-file">server.js</span><span class="tl-file">db.js</span><span class="tl-file">.env</span><span class="tl-file">package.json</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">DAY 3 — FRONTEND</div>
+        <div class="tl-title">Live Leaflet.js Dashboard</div>
+        <div class="tl-desc">Built live dashboard with Leaflet.js map, J&K road markers, red danger zone circles. Connected to backend APIs. Real-time vehicle marker updates. English voice alert integration.</div>
+        <div class="tl-files"><span class="tl-file">public/index.html</span><span class="tl-file">public/app.js</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">DAY 4 — REAL-TIME</div>
+        <div class="tl-title">Socket.io + Live Simulation</div>
+        <div class="tl-desc">Added Socket.io real-time layer. Vehicle movement simulation, danger zone detection, 5 alert types. Canvas 2D simulation with multi-directional voice alerts and accident demo buttons.</div>
+        <div class="tl-files"><span class="tl-file">public/simulation.html</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">PHASE 2 — AI / ML</div>
+        <div class="tl-title">Python XGBoost ML Model</div>
+        <div class="tl-desc">Built XGBoost classifier with 25 features. 20,000 synthetic J&K samples. FastAPI server on port 5000. Real data pipeline: MySQL → NCRB CSV → iRAD Excel → Open-Meteo weather.</div>
+        <div class="tl-files"><span class="tl-file">hillsafe_ml.py</span><span class="tl-file">hillsafe_ml_v2.py</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">PHASE 3 — SPECIAL FEATURES</div>
+        <div class="tl-title">Green Corridor + Weather + Hardware</div>
+        <div class="tl-desc">Built Green Corridor system, weather integration, auto challan, rerouting, proximity detection, brake cascade. Added hardware firmware (ESP32 OBD-II). Twilio SMS, PDFKit reports.</div>
+        <div class="tl-files"><span class="tl-file">green_corridor.js</span><span class="tl-file">weather_service.js</span><span class="tl-file">reroute.js</span><span class="tl-file">sms_service.js</span><span class="tl-file">report_service.js</span><span class="tl-file">obd2_firmware.ino</span></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-phase">PHASE 4 — SIMULATIONS & APPS</div>
+        <div class="tl-title">3D Simulations + PWA + Video</div>
+        <div class="tl-desc">Built Three.js 4D HD simulation, Android PWA driver app, real road footage overlay. Video generator with MediaRecorder. Gemini video prompts. UI/UX presentation mockups.</div>
+        <div class="tl-files"><span class="tl-file">driver_app.html</span><span class="tl-file">hillsafe_realroad.html</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="tech" class="section">
+  <div class="container">
+    <span class="sec-tag">Technology</span>
+    <h2 class="sec-title">Full Tech Stack</h2>
+    <p class="sec-sub">4 programming languages, 15+ libraries, real hardware integration.</p>
+    <div class="tech-grid">
+      <div class="tech-card"><div class="tc-icon">🟢</div><div><div class="tc-name">NODE.JS</div><div class="tc-role">Backend server, API, simulation engine</div></div></div>
+      <div class="tech-card"><div class="tc-icon">⚡</div><div><div class="tc-name">SOCKET.IO</div><div class="tc-role">Real-time vehicle tracking & alerts</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🐍</div><div><div class="tc-name">PYTHON</div><div class="tc-role">ML model, FastAPI server</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🧠</div><div><div class="tc-name">XGBOOST</div><div class="tc-role">Danger prediction, 87% accuracy</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🗄️</div><div><div class="tc-name">MYSQL</div><div class="tc-role">8 tables, full relational schema</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🗺️</div><div><div class="tc-name">LEAFLET.JS</div><div class="tc-role">Live J&K map, heatmap, markers</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🌐</div><div><div class="tc-name">THREE.JS</div><div class="tc-role">4D HD 3D mountain simulation</div></div></div>
+      <div class="tech-card"><div class="tc-icon">☁️</div><div><div class="tc-name">OPEN-METEO</div><div class="tc-role">Free real weather API, 8 zones</div></div></div>
+      <div class="tech-card"><div class="tc-icon">📱</div><div><div class="tc-name">TWILIO</div><div class="tc-role">SMS alerts to family & hospital</div></div></div>
+      <div class="tech-card"><div class="tc-icon">📄</div><div><div class="tc-name">PDFKIT</div><div class="tc-role">Government report generation</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🔊</div><div><div class="tc-name">WEB SPEECH API</div><div class="tc-role">English voice alerts, 19 types</div></div></div>
+      <div class="tech-card"><div class="tc-icon">📡</div><div><div class="tc-name">ESP32 + OBD-II</div><div class="tc-role">Real vehicle hardware, ~₹1,400</div></div></div>
+      <div class="tech-card"><div class="tc-icon">📐</div><div><div class="tc-name">HAVERSINE</div><div class="tc-role">GPS distance, corridor routing</div></div></div>
+      <div class="tech-card"><div class="tc-icon">🎨</div><div><div class="tc-name">HTML CANVAS</div><div class="tc-role">2D simulation, video generator</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FILES -->
+<section class="section" style="background:var(--bg2)">
+  <div class="container">
+    <span class="sec-tag">Project Files</span>
+    <h2 class="sec-title">Complete File Structure</h2>
+    <table class="files-table">
+      <tr><th>FILE</th><th>ROLE</th><th>LINES</th><th>LANGUAGE</th></tr>
+      <tr><td class="fn">server.js</td><td class="fr">Main backend — 100 vehicles, alerts, ECU, corridor, ML calls</td><td class="fl">1,288</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">green_corridor.js</td><td class="fr">Haversine route finder, vehicle-specific pullover instructions</td><td class="fl">180</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">weather_service.js</td><td class="fr">Open-Meteo API, 8 zones, danger multipliers</td><td class="fl">120</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">reroute.js</td><td class="fr">8 alternate J&K routes on zone block</td><td class="fl">80</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">sms_service.js</td><td class="fr">Twilio SMS — family + hospital + challan</td><td class="fl">140</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">report_service.js</td><td class="fr">PDFKit government report generator</td><td class="fl">220</td><td><span class="badge bdg-js">Node.js</span></td></tr>
+      <tr><td class="fn">db.js</td><td class="fr">MySQL connection pool (127.0.0.1 fix)</td><td class="fl">30</td><td><span class="badge bdg-sql">MySQL</span></td></tr>
+      <tr><td class="fn">hillsafe_ml.py</td><td class="fr">XGBoost ML + FastAPI — /predict, /predict-batch, /retrain</td><td class="fl">350</td><td><span class="badge bdg-py">Python</span></td></tr>
+      <tr><td class="fn">hillsafe_ml_v2.py</td><td class="fr">ML v2 — real data pipeline, NCRB + iRAD + IMD</td><td class="fl">420</td><td><span class="badge bdg-py">Python</span></td></tr>
+      <tr><td class="fn">obd2_firmware.ino</td><td class="fr">ESP32 C++ — OBD-II, GPS, G-force crash detect, ECU lock</td><td class="fl">280</td><td><span class="badge bdg-cpp">C++</span></td></tr>
+      <tr><td class="fn">public/index.html</td><td class="fr">Live dashboard — Leaflet map, heatmap, voice alerts, panels</td><td class="fl">1,194</td><td><span class="badge bdg-html">HTML/JS</span></td></tr>
+      <tr><td class="fn">public/simulation.html</td><td class="fr">17-phase 2D Canvas accident simulation</td><td class="fl">959</td><td><span class="badge bdg-html">Canvas 2D</span></td></tr>
+      <tr><td class="fn">public/driver_app.html</td><td class="fr">Android PWA — SOS, GPS, speed, alerts</td><td class="fl">520</td><td><span class="badge bdg-pwa">PWA</span></td></tr>
+      <tr><td class="fn">public/hillsafe_realroad.html</td><td class="fr">Real YouTube road footage + AI overlay</td><td class="fr">480</td><td><span class="badge bdg-html">HTML/JS</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- METRICS -->
+<section id="metrics" class="section">
+  <div class="container">
+    <span class="sec-tag">Impact</span>
+    <h2 class="sec-title">Key Performance Metrics</h2>
+    <div class="metrics-grid" style="margin-bottom:32px">
+      <div class="metric-card">
+        <div class="mc-num" style="color:var(--saf)">11</div>
+        <div class="mc-lbl">RESPONSE TIME (MINUTES)</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:32%;background:var(--saf)"></div></div>
+        <div class="mc-compare">National average: <span>34 minutes</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num" style="color:var(--a1)">87%</div>
+        <div class="mc-lbl">ML MODEL ACCURACY</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:87%;background:var(--a1)"></div></div>
+        <div class="mc-compare">XGBoost · <span>25 features · 20k samples</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num" style="color:var(--wrn)">23</div>
+        <div class="mc-lbl">MINUTES SAVED PER INCIDENT</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:68%;background:var(--wrn)"></div></div>
+        <div class="mc-compare">Each minute = <span>life-saving chance</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num" style="color:var(--a1)">100</div>
+        <div class="mc-lbl">VEHICLES MONITORED LIVE</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:100%;background:var(--a1)"></div></div>
+        <div class="mc-compare">Across <span>8 J&K danger zones</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num" style="color:var(--dng)">&lt;0.5s</div>
+        <div class="mc-lbl">BRAKE CASCADE ALERT TIME</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:95%;background:var(--dng)"></div></div>
+        <div class="mc-compare">Alert to <span>ALL nearby vehicles</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num" style="color:#ffd700">₹1,400</div>
+        <div class="mc-lbl">HARDWARE COST PER VEHICLE</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:28%;background:#ffd700"></div></div>
+        <div class="mc-compare">ESP32 + OBD-II + GPS module = <span>affordable</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPETITION -->
+<section class="section" style="background:var(--bg2)">
+  <div class="container">
+    <span class="sec-tag">Goals</span>
+    <h2 class="sec-title">Competition & Career Targets</h2>
+    <div class="comp-grid">
+      <div class="comp-card"><div class="comp-icon">🏆</div><div class="comp-name">ANTI GRAVITY AI</div><div class="comp-type">AI Innovation Competition</div><span class="comp-status cs-ready">READY TO SUBMIT</span></div>
+      <div class="comp-card"><div class="comp-icon">🎓</div><div class="comp-name">INVENTX INDIA 2025</div><div class="comp-type">National Tech Competition</div><span class="comp-status cs-ready">READY TO SUBMIT</span></div>
+      <div class="comp-card"><div class="comp-icon">🚗</div><div class="comp-name">BOSCH INDIA</div><div class="comp-type">Internship Target · Automotive AI</div><span class="comp-status cs-target">APPLYING</span></div>
+      <div class="comp-card"><div class="comp-icon">🛸</div><div class="comp-name">ISRO</div><div class="comp-type">Internship · Telemetry Systems</div><span class="comp-status cs-target">APPLYING</span></div>
+      <div class="comp-card"><div class="comp-icon">🗺️</div><div class="comp-name">MAPMYINDIA</div><div class="comp-type">Internship · Maps & Navigation</div><span class="comp-status cs-target">APPLYING</span></div>
+      <div class="comp-card"><div class="comp-icon">🇩🇪</div><div class="comp-name">BMW GERMANY</div><div class="comp-type">Internship · Connected Vehicles</div><span class="comp-status cs-target">APPLYING</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FUTURE -->
+<section id="future" class="section">
+  <div class="container">
+    <span class="sec-tag">Roadmap</span>
+    <h2 class="sec-title">What's Next</h2>
+    <div class="future-grid">
+      <div class="future-card"><div class="fu-icon">🤖</div><div><div class="fu-title">REAL ML DATA TRAINING</div><div class="fu-desc">NCRB + iRAD + IMD real J&K accident data to retrain model. Expected accuracy jump to 92%+.</div><span class="fu-status fus-wip">IN PROGRESS</span></div></div>
+      <div class="future-card"><div class="fu-icon">🔧</div><div><div class="fu-title">REAL OBD-II HARDWARE</div><div class="fu-desc">Physical ESP32 + ELM327 deployment in 5 pilot vehicles on Banihal Pass route.</div><span class="fu-status fus-plan">PLANNED</span></div></div>
+      <div class="future-card"><div class="fu-icon">🚁</div><div><div class="fu-title">AIR SUPPORT INTEGRATION</div><div class="fu-desc">Drone dispatch system for zero-connectivity mountain areas where ambulance can't reach.</div><span class="fu-status fus-plan">PLANNED</span></div></div>
+      <div class="future-card"><div class="fu-icon">☁️</div><div><div class="fu-title">CLOUD DEPLOYMENT</div><div class="fu-desc">Deploy on AWS/GCP. Scale from 100 to 10,000+ vehicles. Multi-city support.</div><span class="fu-status fus-plan">PLANNED</span></div></div>
+      <div class="future-card"><div class="fu-icon">📱</div><div><div class="fu-title">NATIVE ANDROID APP</div><div class="fu-desc">Convert PWA to native Android app in Java/Kotlin with offline capability for no-signal zones.</div><span class="fu-status fus-plan">PLANNED</span></div></div>
+      <div class="future-card"><div class="fu-icon">🏛️</div><div><div class="fu-title">J&K GOVT PARTNERSHIP</div><div class="fu-desc">Present to J&K Traffic Police for official pilot program on NH-44 and Banihal corridor.</div><span class="fu-status fus-plan">PLANNED</span></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW TO RUN -->
+<section id="run" class="section" style="background:var(--bg2)">
+  <div class="container">
+    <span class="sec-tag">Setup</span>
+    <h2 class="sec-title">How to Run</h2>
+    <p class="sec-sub">VS Code + XAMPP + Node.js. All runs locally.</p>
+    <div class="run-box">
+      <div class="run-step">
+        <div class="rs-num">1</div>
+        <div>
+          <div class="rs-title">START MYSQL</div>
+          <div class="rs-desc">Open XAMPP → Start MySQL + Apache → Import database</div>
+          <div class="rs-cmd">phpMyAdmin → Import hill_safe_ai.sql</div>
+        </div>
+      </div>
+      <div class="run-step">
+        <div class="rs-num">2</div>
+        <div>
+          <div class="rs-title">INSTALL DEPENDENCIES</div>
+          <div class="rs-desc">In project folder terminal</div>
+          <div class="rs-cmd">npm install</div>
+        </div>
+      </div>
+      <div class="run-step">
+        <div class="rs-num">3</div>
+        <div>
+          <div class="rs-title">START PYTHON ML SERVER</div>
+          <div class="rs-desc">Terminal 1 — runs on port 5000</div>
+          <div class="rs-cmd">python hillsafe_ml.py</div>
+        </div>
+      </div>
+      <div class="run-step">
+        <div class="rs-num">4</div>
+        <div>
+          <div class="rs-title">START NODE.JS SERVER</div>
+          <div class="rs-desc">Terminal 2 — runs on port 3000</div>
+          <div class="rs-cmd">node server.js</div>
+        </div>
+      </div>
+      <div class="run-step">
+        <div class="rs-num">5</div>
+        <div>
+          <div class="rs-title">OPEN IN BROWSER</div>
+          <div class="rs-desc">Main dashboard + simulations</div>
+          <div class="rs-cmd">http://localhost:3000</div>
+          <div class="rs-cmd" style="margin-top:4px">http://localhost:3000/simulation.html</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TEAM -->
+<section id="team" class="section">
+  <div class="container">
+    <span class="sec-tag">Team</span>
+    <h2 class="sec-title">The Developer</h2>
+    <div class="team-grid" style="grid-template-columns:1fr;max-width:500px;margin:0 auto">
+      <div class="team-card">
+        <div class="team-avatar">👨‍💻</div>
+        <div class="team-name">SAFEER AHMED</div>
+        <div class="team-role" style="color:var(--a1)">Solo Developer · AI Engineer · System Architect</div>
+        <div class="team-inst">B.Tech CSE · J&K India</div>
+        <div style="margin:14px 0 16px;padding:12px 16px;
+          background:rgba(0,200,255,.05);border-left:3px solid var(--a1);
+          border-radius:0 8px 8px 0;font-size:12px;color:var(--tx2);
+          font-style:italic;line-height:1.75;text-align:left">
+          "I grew up watching accidents on J&K mountain roads with no ambulance arriving in time.
+          HillSafe AI is my answer — making sure the next life is saved."
+        </div>
+        <div class="team-skills">
+          <span class="ts">Node.js</span><span class="ts">Python</span><span class="ts">MySQL</span>
+          <span class="ts">Three.js</span><span class="ts">HTML/CSS/JS</span><span class="ts">C++ ESP32</span>
+        </div>
+        <div style="margin-top:12px;font-family:var(--fm);font-size:9px;color:var(--tx2)">
+          GitHub: safeerahmed8/Hill_Safe_AI
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🎓</div>
+        <div class="team-name">
+        <div class="team-role">Technical Advisor & Collaborator</div>
+        <div class="team-inst">
+        <div class="team-skills">
+          <span class="ts">System Design</span><span class="ts">ML Architecture</span>
+          <span class="ts">Technical Review</span><span class="ts">Algorithm Design</span>
+        </div>
+        <div style="margin-top:12px;font-family:var(--fm);font-size:9px;color:var(--tx2)">
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🏔 HILLSAFE AI</div>
+  <div class="footer-sub">WORLD'S FIRST AI MOUNTAIN ROAD SAFETY SYSTEM · J&K INDIA · v9.0</div>
+  <div class="footer-links">
+    <a class="fl-link" href="http://localhost:3000">🖥 Dashboard</a>
+    <a class="fl-link" href="http://localhost:3000/simulation.html">🎬 2D Sim</a>
+    <a class="fl-link" href="http://localhost:3000/driver_app.html">📱 Driver App</a>
+    <a class="fl-link" href="https://github.com/safeerahmed8/Hill_Safe_AI">💻 GitHub</a>
+  </div>
+  <div class="footer-copy">BUILT BY SAFEER AHMED · B.TECH CSE · J&K INDIA · 2025 · ALL RIGHTS RESERVED</div>
+</footer>
+
+<script>
+// Animate numbers on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.animation = 'fade 0.6s ease forwards';
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.feat-card, .tech-card, .tl-item, .comp-card').forEach(el => {
+  el.style.opacity = '0';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>

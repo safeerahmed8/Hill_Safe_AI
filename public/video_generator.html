@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HillSafe AI — Video Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020810;color:#b8d8f0;font-family:'Rajdhani',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+h1{font-family:'Orbitron',monospace;font-size:18px;color:#00c8ff;letter-spacing:3px;margin-bottom:8px}
+.sub{font-size:11px;color:#4e7899;letter-spacing:2px;margin-bottom:20px}
+#simCanvas{border:1px solid rgba(0,200,255,.2);border-radius:6px;display:block;max-width:100%}
+.controls{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.btn{padding:9px 22px;border-radius:5px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;cursor:pointer;border:1px solid;transition:all .2s;letter-spacing:1px}
+.btn-g{background:rgba(0,230,118,.12);color:#00e676;border-color:rgba(0,230,118,.35)}
+.btn-g:hover{background:rgba(0,230,118,.25)}
+.btn-r{background:rgba(255,32,32,.1);color:#ff6060;border-color:rgba(255,32,32,.3)}
+.btn-r:hover{background:rgba(255,32,32,.2)}
+.btn-b{background:rgba(0,200,255,.08);color:#00c8ff;border-color:rgba(0,200,255,.25)}
+.btn-b:hover{background:rgba(0,200,255,.2)}
+.btn-y{background:rgba(255,215,0,.1);color:#ffd700;border-color:rgba(255,215,0,.3)}
+.btn-y:hover{background:rgba(255,215,0,.2)}
+.status{font-family:'Share Tech Mono',monospace;font-size:10px;color:#4e7899;padding:6px 14px;
+  border:1px solid rgba(0,200,255,.15);border-radius:4px;min-width:200px;text-align:center}
+.status.rec{color:#ff2020;border-color:rgba(255,32,32,.3);background:rgba(255,32,32,.06)}
+.status.done{color:#00e676;border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.06)}
+.info{font-size:10px;color:#4e7899;margin-top:10px;text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<h1>🏔 HILLSAFE AI VIDEO GENERATOR</h1>
+<div class="sub">GENERATES A DOWNLOADABLE SIMULATION VIDEO · 60 SECONDS · 1280×720</div>
+
+<canvas id="simCanvas" width="1280" height="720"></canvas>
+
+<div class="controls">
+  <button class="btn btn-g" onclick="startAll()">▶ START + RECORD</button>
+  <button class="btn btn-b" onclick="playOnly()">▶ Preview Only</button>
+  <button class="btn btn-r" onclick="stopRec()">⏹ Stop Recording</button>
+  <button class="btn btn-y" id="dlBtn" style="display:none" onclick="downloadVid()">⬇ Download Video</button>
+  <div class="status" id="status">READY — Press ▶ Start + Record</div>
+</div>
+
+<div class="info">
+  Recording exports as <b>.webm</b> video · Import into CapCut / DaVinci Resolve / Video editor<br>
+  Play the video once before recording for smoother output
+</div>
+
+<script>
+// ── CANVAS & CONTEXT ──────────────────────────────────────────
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = 1280, H = 720;
+
+// ── AUDIO (beep for alerts) ────────────────────────────────────
+let audioCtx = null;
+function initAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+}
+function beep(freq=880, dur=200, vol=0.3){
+  if(!audioCtx) return;
+  const o=audioCtx.createOscillator();const g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.frequency.value=freq;g.gain.value=vol;
+  o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur/1000);
+  o.stop(audioCtx.currentTime+dur/1000);
+}
+function siren(){if(!audioCtx)return;
+  [880,660,880,660].forEach((f,i)=>setTimeout(()=>beep(f,250,.4),i*260));
+}
+
+// ── VIDEO RECORDING ───────────────────────────────────────────
+let recorder=null, chunks=[], videoBlob=null;
+function startRecording(){
+  chunks=[];videoBlob=null;
+  const stream=canvas.captureStream(30);
+  recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'});
+  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+  recorder.onstop=()=>{
+    videoBlob=new Blob(chunks,{type:'video/webm'});
+    document.getElementById('status').textContent='✅ RECORDING COMPLETE — Download ready!';
+    document.getElementById('status').className='status done';
+    document.getElementById('dlBtn').style.display='block';
+  };
+  recorder.start(100);
+  document.getElementById('status').textContent='● RECORDING… do not close tab';
+  document.getElementById('status').className='status rec';
+}
+function stopRec(){if(recorder&&recorder.state==='recording')recorder.stop();}
+function downloadVid(){
+  if(!videoBlob)return;
+  const url=URL.createObjectURL(videoBlob);
+  const a=document.createElement('a');a.href=url;a.download='HillSafe_AI_Simulation.webm';a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── ROAD & SCENE ──────────────────────────────────────────────
+// Top-down 4-lane highway
+const LANE_W = 90;
+const ROAD_L = 280; // left edge of road
+const ROAD_R = W - 260; // right edge
+const LANES = [
+  ROAD_L + 10,
+  ROAD_L + 10 + LANE_W,
+  ROAD_L + 10 + LANE_W*2 + 20, // gap = divider
+  ROAD_L + 10 + LANE_W*3 + 20,
+];
+const ROAD_TOP = 80;
+const ROAD_BOT = H - 80;
+const ROAD_W_TOTAL = LANE_W*4 + 20;
+
+// ── VEHICLES ─────────────────────────────────────────────────
+class Vehicle {
+  constructor({id,plate,name,blood,col,x,y,spd,dir=1,type='car',isAcc=false}){
+    Object.assign(this,{id,plate,name,blood,col,x,y,spd,dir,type,isAcc});
+    this.aiScore = Math.random()*.2;
+    this.status = 'normal'; // normal/warning/danger/crashed/pulled
+    this.alertAnim = 0;
+    this.vx = 0; this.vy = dir*(spd/120)*2.2;
+    this.angle = dir>0 ? Math.PI : 0;
+    this.warnText = '';
+    this.pulledX = 0;
+    this.exploded = false;
+  }
+  get W(){ return this.type==='truck'?52:this.type==='bus'?48:38; }
+  get H(){ return this.type==='truck'?28:this.type==='bus'?24:20; }
+}
+
+const COLORS={car1:'#4fc3f7',car2:'#ffd700',car3:'#a855f7',car4:'#ff9090',
+  bus:'#ff5020',truck:'#2d6a4f',ambulance:'#ffffff',police:'#1a237e',acc:'#ff3333'};
+
+let vehs=[], ambulance=null, helicopter=null, police=[];
+let shake={x:0,y:0},shakeAmt=0;
+
+function buildVehicles(){
+  vehs=[];
+  // Southbound lane 0: cars going down
+  vehs.push(new Vehicle({id:'VH-001',plate:'JK-02-T-1234',name:'Rajinder Kumar',blood:'B+',col:COLORS.car1,x:LANES[0]+LANE_W*.5,y:180,spd:85,dir:1,type:'car'}));
+  vehs.push(new Vehicle({id:'VH-002',plate:'JK-02-B-5567',name:'Mohammed Iqbal',blood:'O+',col:COLORS.bus,x:LANES[1]+LANE_W*.5,y:80,spd:90,dir:1,type:'bus',isAcc:true}));
+  vehs.push(new Vehicle({id:'VH-003',plate:'JK-09-CB-789',name:'Arjun Sharma',blood:'A+',col:COLORS.car3,x:LANES[0]+LANE_W*.5,y:320,spd:78,dir:1,type:'car'}));
+  // Northbound lane 2/3: cars going up
+  vehs.push(new Vehicle({id:'VH-004',plate:'JK-14-DC-234',name:'Abdul Rashid',blood:'O-',col:COLORS.car2,x:LANES[2]+LANE_W*.5,y:520,spd:82,dir:-1,type:'car'}));
+  vehs.push(new Vehicle({id:'VH-005',plate:'JK-06-MN-004',name:'Priya Singh',blood:'B-',col:COLORS.car4,x:LANES[3]+LANE_W*.5,y:420,spd:75,dir:-1,type:'truck'}));
+  vehs.push(new Vehicle({id:'VH-006',plate:'JK-15-AA-111',name:'Vikram Dogra',blood:'A+',col:COLORS.car1,x:LANES[2]+LANE_W*.5,y:280,spd:88,dir:-1,type:'car'}));
+}
+
+// ── PARTICLES ─────────────────────────────────────────────────
+let pars=[];
+function spawnExp(x,y){
+  for(let i=0;i<60;i++){
+    const a=Math.random()*Math.PI*2,sp=2+Math.random()*6;
+    pars.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,
+      col:i<20?'#ff2020':i<40?'#ff8800':'#ffff00',size:3+Math.random()*7,dec:.015+Math.random()*.02});
+  }
+  for(let i=0;i<20;i++){
+    pars.push({x,y,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:2,
+      col:'#555',size:5+Math.random()*12,dec:.015,isDebris:true});
+  }
+}
+
+// ── DRAW FUNCTIONS ─────────────────────────────────────────────
+function drawBG(){
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#0a1520');sky.addColorStop(1,'#1a2e1e');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+  // Left mountain/terrain
+  ctx.fillStyle='#162012';ctx.fillRect(0,0,ROAD_L,H);
+  // Mountain silhouettes left
+  [[0,H*.3,ROAD_L*.6,H*.7],[ROAD_L*.3,H*.2,ROAD_L*.5,H*.6]].forEach(([x,py,w,h])=>{
+    ctx.beginPath();ctx.moveTo(x,H);ctx.lineTo(x+w/2,py);ctx.lineTo(x+w,H);ctx.closePath();
+    ctx.fillStyle='#1a2e14';ctx.fill();
+  });
+  // Snow caps left
+  ctx.beginPath();ctx.moveTo(ROAD_L*.2,H*.3);ctx.lineTo(ROAD_L*.3,H*.22);ctx.lineTo(ROAD_L*.4,H*.3);ctx.closePath();
+  ctx.fillStyle='rgba(220,235,255,.7)';ctx.fill();
+
+  // Right mountain/terrain
+  ctx.fillStyle='#162012';ctx.fillRect(ROAD_R,0,W-ROAD_R,H);
+  // Mountain silhouettes right
+  [[ROAD_R+20,H*.25,200,H*.65],[ROAD_R+120,H*.18,220,H*.55]].forEach(([x,py,w,h])=>{
+    ctx.beginPath();ctx.moveTo(x,H);ctx.lineTo(x+w/2,py);ctx.lineTo(x+w,H);ctx.closePath();
+    ctx.fillStyle='#1a2e14';ctx.fill();
+  });
+  // Snow cap right
+  ctx.beginPath();ctx.moveTo(ROAD_R+40,H*.25);ctx.lineTo(ROAD_R+130,H*.18);ctx.lineTo(ROAD_R+220,H*.25);ctx.closePath();
+  ctx.fillStyle='rgba(220,235,255,.7)';ctx.fill();
+
+  // Trees left
+  for(let i=0;i<8;i++){
+    const tx=30+Math.random()*180,ty=100+i*80;
+    ctx.beginPath();ctx.moveTo(tx,ty+20);ctx.lineTo(tx-10,ty+20);ctx.lineTo(tx,ty);ctx.closePath();
+    ctx.fillStyle='#1a3d14';ctx.fill();
+  }
+}
+
+function drawRoad(){
+  // Road base (asphalt)
+  ctx.fillStyle='#1c2228';ctx.fillRect(ROAD_L,ROAD_TOP,ROAD_W_TOTAL+20,ROAD_BOT-ROAD_TOP);
+
+  // Lane lines (dashed white)
+  ctx.setLineDash([30,20]);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=2;
+  [ROAD_L+LANE_W,ROAD_L+LANE_W*2,ROAD_L+LANE_W*3+20,ROAD_L+LANE_W*4+20].forEach(lx=>{
+    ctx.beginPath();ctx.moveTo(lx,ROAD_TOP);ctx.lineTo(lx,ROAD_BOT);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Center divider (solid yellow double line)
+  const divX=ROAD_L+LANE_W*2+10;
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(divX-4,ROAD_TOP);ctx.lineTo(divX-4,ROAD_BOT);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(divX+4,ROAD_TOP);ctx.lineTo(divX+4,ROAD_BOT);ctx.stroke();
+
+  // Road edges
+  ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=2.5;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ROAD_L,ROAD_TOP);ctx.lineTo(ROAD_L,ROAD_BOT);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ROAD_R,ROAD_TOP);ctx.lineTo(ROAD_R,ROAD_BOT);ctx.stroke();
+
+  // NH-44 sign
+  ctx.fillStyle='rgba(20,80,20,.9)';ctx.fillRect(ROAD_L-90,H/2-22,80,44);
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(ROAD_L-90,H/2-22,80,44);
+  ctx.fillStyle='#fff';ctx.font='bold 16px Arial';ctx.textAlign='center';
+  ctx.fillText('NH-44',ROAD_L-50,H/2-5);
+  ctx.font='11px Arial';ctx.fillText('J&K HWY',ROAD_L-50,H/2+14);
+  ctx.textAlign='left';
+
+  // Speed limit sign
+  ctx.beginPath();ctx.arc(ROAD_R+55,200,30,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#ff0000';ctx.lineWidth=4;ctx.stroke();
+  ctx.fillStyle='#ff0000';ctx.font='bold 18px Arial';ctx.textAlign='center';
+  ctx.fillText('100',ROAD_R+55,207);ctx.textAlign='left';
+}
+
+function drawVehicle(v){
+  if(v.exploded) return;
+  const{x,y,W:vw,H:vh,col,status,type}=v;
+  const dispX=x+shake.x, dispY=y+shake.y;
+
+  ctx.save();ctx.translate(dispX,dispY);
+
+  // Body
+  ctx.fillStyle=status==='crashed'?'#552020':status==='pulled'?'rgba('+hexToRgb(col)+',0.5)':col;
+  ctx.beginPath();ctx.roundRect(-vw/2,-vh/2,vw,vh,4);ctx.fill();
+  // Windshield
+  ctx.fillStyle='rgba(120,200,255,0.55)';
+  const wsH=vh*.45,wsW=vw*.45;
+  const wsY=v.dir>0?-vh/2+3:-vh/2+vh-wsH-3;
+  ctx.fillRect(-wsW/2,wsY,wsW,wsH);
+  // Wheels
+  ctx.fillStyle='#111';
+  [[-vw/2+6,-vh/2+3],[vw/2-14,-vh/2+3],[-vw/2+6,vh/2-9],[vw/2-14,vh/2-9]].forEach(([wx,wy])=>{
+    ctx.fillRect(wx,wy,10,7);
+  });
+  // Headlights
+  ctx.fillStyle='rgba(255,255,200,.8)';
+  const hlY=v.dir>0?-vh/2+2:vh/2-7;
+  ctx.fillRect(-vw/2+3,hlY,8,5);ctx.fillRect(vw/2-11,hlY,8,5);
+  // Tail lights
+  ctx.fillStyle=status==='pulled'||v.braking?'#ff2020':'rgba(140,0,0,.4)';
+  const tlY=v.dir>0?vh/2-7:-vh/2+2;
+  ctx.fillRect(-vw/2+3,tlY,8,5);ctx.fillRect(vw/2-11,tlY,8,5);
+  // Truck body extras
+  if(type==='truck'){ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(-vw/2+4,-vh/2+4,vw*.6,vh-8);}
+  // Bus windows
+  if(type==='bus'){
+    ctx.fillStyle='rgba(120,200,255,.3)';
+    for(let i=0;i<4;i++){ctx.fillRect(-vw/2+8+i*11,-vh/2+4,9,vh*.4);}
+  }
+  ctx.restore();
+
+  // AI tracking label
+  drawVehLabel(v,dispX,dispY);
+
+  // Alert ring
+  if(v.alertAnim>0){
+    const r=(1-v.alertAnim)*55;
+    ctx.beginPath();ctx.arc(dispX,dispY,r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,${status==='warning'?140:32},0,${v.alertAnim*.8})`;
+    ctx.lineWidth=2.5;ctx.stroke();
+    v.alertAnim=Math.max(0,v.alertAnim-.018);
+  }
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`${r},${g},${b}`;
+}
+
+function drawVehLabel(v,x,y){
+  if(v.status==='crashed') return;
+  const col=v.aiScore>=.75?'#ff2020':v.aiScore>=.5?'#ff8c00':v.status==='warning'?'#ff8c00':'#00e676';
+  const bg=v.aiScore>=.75?'rgba(255,32,32,.18)':v.aiScore>=.5?'rgba(255,140,0,.15)':'rgba(0,200,255,.1)';
+  const lw=110,lh=38,lx=x-lw/2,ly=y-v.H/2-46;
+  // Box
+  ctx.fillStyle=bg;ctx.strokeStyle=col;ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,4);ctx.fill();ctx.stroke();
+  // Line to vehicle
+  ctx.beginPath();ctx.moveTo(x,y-v.H/2-2);ctx.lineTo(x,ly+lh);ctx.strokeStyle=`${col}66`;ctx.lineWidth=1;ctx.stroke();
+  // Text
+  ctx.font='bold 8px Orbitron, monospace';ctx.fillStyle=col;ctx.textAlign='center';
+  ctx.fillText(v.id,x,ly+12);
+  ctx.font='8px Share Tech Mono, monospace';ctx.fillStyle='#b8d8f0';
+  ctx.fillText(v.plate,x,ly+23);
+  const spd=v.status==='pulled'?0:Math.round(v.spd);
+  ctx.fillStyle=spd>100?'#ff2020':spd>80?'#ff8c00':'#00e676';
+  ctx.fillText(spd+' km/h',x,ly+34);
+  if(v.warnText){
+    ctx.font='bold 8px Orbitron, monospace';ctx.fillStyle='#ff2020';
+    ctx.fillText(v.warnText,x,ly-8);
+  }
+  ctx.textAlign='left';
+}
+
+function drawAmbulance(){
+  if(!ambulance||!ambulance.active) return;
+  const{x,y}=ambulance;
+  ctx.save();ctx.translate(x+shake.x,y+shake.y);
+  // Body
+  ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(-22,-12,44,24,4);ctx.fill();
+  ctx.strokeStyle='#cc0000';ctx.lineWidth=2;ctx.stroke();
+  // Cross
+  ctx.fillStyle='#cc0000';ctx.fillRect(-2,-10,4,20);ctx.fillRect(-8,-2,16,4);
+  // Siren flash
+  const sf=Math.floor(Date.now()/200)%2;
+  ctx.fillStyle=sf?'#ff2020':'#0044ff';ctx.fillRect(-10,-14,10,5);
+  ctx.fillStyle=sf?'#0044ff':'#ff2020';ctx.fillRect(0,-14,10,5);
+  // Wheels
+  ctx.fillStyle='#111';[[-18,-12],[12,-12],[-18,7],[12,7]].forEach(([wx,wy])=>ctx.fillRect(wx,wy,10,6));
+  ctx.restore();
+  // Label
+  ctx.font='bold 9px Orbitron,monospace';ctx.fillStyle='#00e676';ctx.textAlign='center';
+  ctx.fillText('🚑 AMBULANCE - SMHS SRINAGAR',x+shake.x,y+shake.y-20);
+  const spd=Math.round(ambulance.spd);
+  ctx.font='8px Share Tech Mono';ctx.fillStyle='#00e676';ctx.fillText(spd+' km/h',x+shake.x,y+shake.y+30);
+  ctx.textAlign='left';
+}
+
+function drawHelicopter(){
+  if(!helicopter||!helicopter.active) return;
+  const{x,y,angle}=helicopter;
+  ctx.save();ctx.translate(x+shake.x,y+shake.y);
+  // Shadow on road
+  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(0,30,35,15,0,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.fillStyle='#ffffff';ctx.beginPath();ctx.ellipse(0,0,28,14,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc0000';ctx.lineWidth=2;ctx.stroke();
+  // Red cross
+  ctx.fillStyle='#cc0000';ctx.fillRect(-2,-12,4,24);ctx.fillRect(-10,-2,20,4);
+  // Rotor blades (spinning)
+  ctx.strokeStyle='#888';ctx.lineWidth=3;
+  const ra=angle;
+  ctx.beginPath();ctx.moveTo(Math.cos(ra)*-50,Math.sin(ra)*-50);ctx.lineTo(Math.cos(ra)*50,Math.sin(ra)*50);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(Math.cos(ra+Math.PI/2)*-50,Math.sin(ra+Math.PI/2)*-50);ctx.lineTo(Math.cos(ra+Math.PI/2)*50,Math.sin(ra+Math.PI/2)*50);ctx.stroke();
+  // Tail
+  ctx.fillStyle='#ddd';ctx.fillRect(22,-4,20,8);
+  // Searchlight beam
+  ctx.beginPath();ctx.moveTo(-5,14);ctx.lineTo(-30,80);ctx.lineTo(30,80);ctx.lineTo(5,14);ctx.closePath();
+  ctx.fillStyle='rgba(255,255,200,.08)';ctx.fill();
+  ctx.restore();
+  // Label
+  ctx.font='bold 9px Orbitron,monospace';ctx.fillStyle='#00c8ff';ctx.textAlign='center';
+  ctx.fillText('🚁 AIR SUPPORT — HILLSAFE AI',x+shake.x,y+shake.y-30);
+  ctx.font='8px Share Tech Mono';ctx.fillStyle='rgba(0,200,255,.7)';
+  ctx.fillText('EMERGENCY MEDICAL HELICOPTER',x+shake.x,y+shake.y+28);
+  ctx.textAlign='left';
+}
+
+function drawParticles(){
+  for(let i=pars.length-1;i>=0;i--){
+    const p=pars[i];
+    ctx.save();ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.col;
+    if(p.isDebris){ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);}
+    else{ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.vx*=.95;p.life-=p.dec;
+    if(p.life<=0)pars.splice(i,1);
+  }
+}
+
+function drawHUD(t,phase){
+  // Top bar
+  ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,52);
+  ctx.strokeStyle='rgba(0,200,255,.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,52);ctx.lineTo(W,52);ctx.stroke();
+  // Logo
+  ctx.fillStyle='#00c8ff';ctx.font='bold 18px Orbitron,monospace';ctx.fillText('🏔 HILLSAFE AI',16,33);
+  ctx.fillStyle='#4e7899';ctx.font='8px Share Tech Mono';ctx.fillText('MOUNTAIN ROAD SAFETY SYSTEM · J&K INDIA',190,33);
+  // Phase title
+  const PHASE_TITLES=['NORMAL TRAFFIC — AI MONITORING','⚠️ OVERSPEED DETECTED — 220 km/h!',
+    '🚨 BRAKE FAILURE + CASCADE ALERT','💥 ACCIDENT — EMERGENCY RESPONSE',
+    '🚑 GREEN CORRIDOR + AIR SUPPORT','✅ MISSION COMPLETE'];
+  const ptitle=PHASE_TITLES[Math.min(phase,PHASE_TITLES.length-1)];
+  ctx.fillStyle=phase>=3?'#ff2020':phase>=1?'#ff8c00':'#00c8ff';
+  ctx.font='bold 13px Orbitron,monospace';ctx.textAlign='center';
+  ctx.fillText(ptitle,W/2,32);ctx.textAlign='left';
+  // REC dot
+  const recOn=Math.floor(t/0.8)%2===0;
+  ctx.beginPath();ctx.arc(W-80,26,6,0,Math.PI*2);ctx.fillStyle=recOn?'#ff2020':'rgba(255,32,32,.2)';ctx.fill();
+  ctx.font='8px Share Tech Mono';ctx.fillStyle='#ff2020';ctx.fillText('● REC',W-70,30);
+  // Time
+  const m=Math.floor(t/60),sec=Math.floor(t%60);
+  ctx.fillStyle='#00c8ff';ctx.font='11px Share Tech Mono';ctx.textAlign='right';
+  ctx.fillText(`${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`,W-16,32);
+  ctx.textAlign='left';
+
+  // Bottom HUD
+  ctx.fillStyle='rgba(0,0,0,.8)';ctx.fillRect(0,H-52,W,52);
+  ctx.strokeStyle='rgba(0,200,255,.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H-52);ctx.lineTo(W,H-52);ctx.stroke();
+  const stats=[
+    ['VEHICLES',vehs.length,'#00c8ff'],
+    ['ACCIDENTS',phase>=3?1:0,phase>=3?'#ff2020':'#00e676'],
+    ['ALERTED',phase>=2?5:0,'#ff8c00'],
+    ['RESPONSE',phase>=3?'ACTIVE':'STANDBY',phase>=3?'#ff2020':'#4e7899'],
+    ['AI MODEL','XGBoost 87%','#a855f7'],
+    ['CORRIDOR',phase>=4?'ACTIVE':'INACTIVE',phase>=4?'#00e676':'#4e7899'],
+    ['AIR SUPPORT',phase>=4?'DEPLOYED':'STANDBY',phase>=4?'#00c8ff':'#4e7899'],
+  ];
+  stats.forEach(([l,v,c],i)=>{
+    const sx=16+i*183;
+    ctx.fillStyle='rgba(0,200,255,.05)';ctx.fillRect(sx,H-48,175,42);
+    ctx.strokeStyle='rgba(0,200,255,.1)';ctx.lineWidth=.5;ctx.strokeRect(sx,H-48,175,42);
+    ctx.fillStyle='#4e7899';ctx.font='8px Share Tech Mono';ctx.fillText(l,sx+8,H-36);
+    ctx.fillStyle=c;ctx.font='bold 12px Orbitron,monospace';ctx.fillText(String(v),sx+8,H-18);
+  });
+
+  // Response timer (phase 3+)
+  if(phase>=3){
+    const respT=Math.min(t-12,11);
+    ctx.fillStyle='rgba(0,0,0,.88)';ctx.beginPath();ctx.roundRect(W-280,H-100,260,44,6);ctx.fill();
+    ctx.strokeStyle='#00e676';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#4e7899';ctx.font='8px Share Tech Mono';ctx.fillText('RESPONSE TIME',W-270,H-82);
+    ctx.fillStyle='#00e676';ctx.font='bold 18px Orbitron,monospace';ctx.textAlign='right';
+    ctx.fillText(respT.toFixed(1)+' min (avg: 34 min)',W-20,H-65);ctx.textAlign='left';
+  }
+
+  // Emergency banner (phase 3-4)
+  if(phase===3||phase===2){
+    const bp=Math.sin(Date.now()/300);
+    ctx.fillStyle=`rgba(255,32,32,${.82+bp*.1})`;
+    ctx.fillRect(0,56,W,34);
+    ctx.fillStyle='#fff';ctx.font='bold 14px Orbitron,monospace';ctx.textAlign='center';
+    ctx.fillText('🚨 ACCIDENT DETECTED — BANIHAL PASS — HILLSAFE AI EMERGENCY RESPONSE ACTIVATED',W/2,78);
+    ctx.textAlign='left';
+  }
+}
+
+function drawCrashMarker(x,y){
+  // Fire
+  const fp=Math.sin(Date.now()/150)*.5+.5;
+  ctx.beginPath();ctx.arc(x,y,20+fp*8,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,${Math.round(80+fp*80)},0,${.7+fp*.2})`;ctx.fill();
+  ctx.beginPath();ctx.arc(x,y,12+fp*5,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,220,50,${.8+fp*.15})`;ctx.fill();
+  // Crash text
+  ctx.font='bold 10px Orbitron,monospace';ctx.fillStyle='#ff2020';ctx.textAlign='center';
+  ctx.fillText('💥 CRASH — JK-02-B-5567',x,y-38);
+  ctx.font='9px Share Tech Mono';ctx.fillStyle='rgba(255,100,100,.8)';
+  ctx.fillText('G-FORCE: 8.2G · BLOOD: O+',x,y-24);
+  ctx.textAlign='left';
+}
+
+function drawGreenCorridor(){
+  // Green glow on left lanes
+  const grad=ctx.createLinearGradient(ROAD_L,0,ROAD_L+LANE_W*2,0);
+  grad.addColorStop(0,'rgba(0,230,118,.12)');grad.addColorStop(1,'rgba(0,230,118,.04)');
+  ctx.fillStyle=grad;ctx.fillRect(ROAD_L,ROAD_TOP,LANE_W*2,ROAD_BOT-ROAD_TOP);
+  ctx.font='bold 9px Orbitron,monospace';ctx.fillStyle='rgba(0,230,118,.7)';ctx.textAlign='center';
+  ctx.fillText('🟢 GREEN CORRIDOR ACTIVE',ROAD_L+LANE_W,200);
+  ctx.fillText('AMBULANCE ROUTE CLEARED',ROAD_L+LANE_W,216);
+  ctx.textAlign='left';
+}
+
+// ── SIMULATION LOGIC ──────────────────────────────────────────
+let t=0,phase=0,running=false;
+let crashX=LANES[1]+LANE_W*.5,crashY=H*.55;
+const done={};
+const k=s=>!done[s],m=s=>{done[s]=true;};
+let lastFrame=null;
+
+function simFrame(ts){
+  if(!running){lastFrame=null;return;}
+  requestAnimationFrame(simFrame);
+  if(!lastFrame){lastFrame=ts;}
+  const dt=Math.min((ts-lastFrame)/1000,.04);lastFrame=ts;
+  t+=dt;
+
+  // Update shake
+  if(shakeAmt>.5){shake.x=(Math.random()-.5)*shakeAmt;shake.y=(Math.random()-.5)*shakeAmt;shakeAmt*=.78;}
+  else{shake.x=0;shake.y=0;shakeAmt=0;}
+
+  // Phase transitions
+  if(t<8)phase=0;
+  else if(t<12)phase=1;
+  else if(t<15)phase=2;
+  else if(t<22)phase=3;
+  else if(t<38)phase=4;
+  else phase=5;
+
+  // Phase 0: normal traffic
+  if(phase===0){
+    vehs.forEach(v=>{if(!v.exploded){v.y+=v.vy*dt;if(v.y>H+80)v.y=-80;if(v.y<-80)v.y=H+80;v.aiScore=Math.max(.1,v.aiScore+(.15-v.aiScore)*dt*.5);}});
+  }
+
+  // Phase 1: overspeed
+  if(phase===1){
+    if(k('p1')){m('p1');
+      const bus=vehs.find(v=>v.isAcc);if(bus){bus.status='warning';bus.warnText='⚠ 220 km/h!';}
+      vehs.filter(v=>!v.isAcc).forEach(v=>v.alertAnim=1);
+    }
+    vehs.forEach(v=>{if(!v.exploded){
+      v.spd=v.isAcc?Math.min(220,v.spd+dt*40):v.spd;
+      v.vy=v.dir*(v.spd/120)*2.5;v.y+=v.vy*dt;
+      if(v.y>H+80)v.y=-80;if(v.y<-80)v.y=H+80;
+      if(v.isAcc){v.aiScore=Math.min(.92,.5+t*.06);}
+    }});
+  }
+
+  // Phase 2: brake failure cascade
+  if(phase===2){
+    if(k('p2')){m('p2');
+      const bus=vehs.find(v=>v.isAcc);
+      if(bus){bus.status='danger';bus.warnText='🚨 BRAKE FAIL!';}
+      vehs.filter(v=>!v.isAcc).forEach(v=>{v.status='warning';v.alertAnim=1;v.braking=true;});
+      beep&&siren();
+    }
+    vehs.forEach(v=>{if(!v.exploded){
+      if(v.isAcc){v.spd=Math.min(230,v.spd+dt*15);v.vy=v.dir*(v.spd/120)*2.8;v.y+=v.vy*dt;}
+      else{v.spd=Math.max(0,v.spd-dt*60);}
+      if(v.y>H+80)v.y=-80;if(v.y<-80)v.y=H+80;
+    }});
+  }
+
+  // Phase 3: crash
+  if(phase===3){
+    if(k('p3')){m('p3');
+      const bus=vehs.find(v=>v.isAcc);
+      if(bus){bus.status='crashed';bus.exploded=false;crashX=bus.x;crashY=bus.y;spawnExp(crashX,crashY);bus.warnText='';}
+      shakeAmt=22;beep&&siren();
+      vehs.filter(v=>!v.isAcc).forEach(v=>{v.status='pulled';v.spd=0;v.vy=0;});
+    }
+    vehs.forEach(v=>{if(!v.exploded&&v.status==='pulled'){
+      const targetX=v.dir>0?ROAD_L+5:ROAD_R-5;
+      v.x+=(targetX-v.x)*dt*.8;
+    }});
+  }
+
+  // Phase 4: green corridor + air support + ambulance
+  if(phase>=4){
+    if(k('p4')){m('p4');
+      ambulance={active:true,x:ROAD_L+LANE_W*.5,y:H+50,spd:0,dir:-1};
+      helicopter={active:true,x:W/2,y:-80,angle:0,spd:0};
+    }
+    if(ambulance){
+      ambulance.spd=Math.min(95,ambulance.spd+dt*15);
+      ambulance.y+=ambulance.dir*(ambulance.spd/100)*2.5*dt;
+    }
+    if(helicopter){
+      helicopter.angle+=dt*6;
+      helicopter.y=Math.min(H*.4,helicopter.y+dt*120);
+    }
+  }
+
+  if(phase===5&&k('end')){m('end');running=false;stopRec();
+    document.getElementById('status').textContent='✅ Video complete! Downloading...';
+    document.getElementById('status').className='status done';}
+
+  // Draw
+  ctx.clearRect(0,0,W,H);
+  drawBG();drawRoad();
+  if(phase>=4) drawGreenCorridor();
+  if(phase>=3) drawCrashMarker(crashX+shake.x,crashY+shake.y);
+  drawParticles();
+  vehs.forEach(v=>drawVehicle(v));
+  drawAmbulance();drawHelicopter();
+  drawHUD(t,phase);
+  document.getElementById('pf') && (document.getElementById('pf').style.width=(t/60*100)+'%');
+}
+
+function playOnly(){initAudio();buildVehicles();pars=[];ambulance=null;helicopter=null;done['.reset']=undefined;Object.keys(done).forEach(k=>delete done[k]);t=0;phase=0;running=true;lastFrame=null;requestAnimationFrame(simFrame);document.getElementById('status').textContent='▶ Preview playing...';}
+function startAll(){playOnly();startRecording();}
+
+buildVehicles();
+// Draw initial frame
+ctx.clearRect(0,0,W,H);drawBG();drawRoad();vehs.forEach(v=>drawVehicle(v));
+ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,W,H);
+ctx.font='bold 24px Orbitron,monospace';ctx.fillStyle='#00c8ff';ctx.textAlign='center';
+ctx.fillText('HillSafe AI — Simulation Video Generator',W/2,H/2-20);
+ctx.font='12px Share Tech Mono';ctx.fillStyle='#4e7899';ctx.fillText('Click ▶ START + RECORD to generate and download video',W/2,H/2+20);
+ctx.textAlign='left';
+</script>
+</body>
+</html>

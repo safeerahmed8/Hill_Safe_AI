@@ -1,0 +1,123 @@
+═══════════════════════════════════════════════════════════════
+  🏔 HILLSAFE AI v9.0 — QUICK START (5 minutes)
+═══════════════════════════════════════════════════════════════
+
+BEFORE YOU START
+  Delete any old/previous hill_safe_ai folder completely, and use
+  ONLY this fresh folder. This avoids leftover duplicate or broken
+  files from earlier versions.
+
+  Always run every command below from the PROJECT ROOT — the
+  folder that directly contains package.json (NOT inside server/
+  or public/).
+
+FOLDER MAP (so VS Code's file list makes sense)
+  server/     → Node.js backend (server.js + its helper files)
+  ml/         → Python AI engine (runs separately, its own process)
+  hardware/   → ESP32 firmware for the physical device
+  database/   → one-time MySQL import file
+  public/     → everything the browser loads (website, dashboard, demos)
+  docs/       → presentation deck, demo script, briefing document
+
+STEP 1 — DATABASE (one time) — choose ONE option below
+
+  ── OPTION A: XAMPP (simplest, blank password by default) ──
+  1. Open XAMPP Control Panel → Start MySQL + Apache
+  2. Open http://localhost/phpmyadmin
+  3. Import → choose database/hill_safe_ai.sql → Go
+     (creates database + 12 tables + real J&K data)
+
+  ── OPTION B: MySQL Workbench (if you installed standalone MySQL) ──
+  1. Check MySQL Server is running:
+     Windows Search → "Services" → find "MySQL80" → should say "Running"
+     (if stopped, right-click → Start)
+  2. Open MySQL Workbench → click your "Local instance MySQL80" connection
+  3. Enter the password YOU set during MySQL installation
+     (⚠️ this is a REAL password, not blank like XAMPP — remember it,
+     you'll need it again in Step 2 below)
+  4. File menu → Open SQL Script → choose database/hill_safe_ai.sql
+  5. Click the ⚡ lightning-bolt icon (or Ctrl+Shift+Enter) to run it
+     (creates database + 12 tables + real J&K data)
+
+STEP 2 — ENVIRONMENT (one time)
+  1. Copy env_example.txt → rename the copy to .env
+     (.env stays in the PROJECT ROOT, next to package.json)
+  2. Edit .env → set DB_PASSWORD to your MySQL password
+     • XAMPP users: usually blank — leave DB_PASSWORD= empty
+     • MySQL Workbench users: put your REAL root password here
+       (the one you typed into Workbench in Step 1 Option B.3)
+  3. OPTIONAL — Live Traffic: sign up free at developer.tomtom.com
+     (no credit card, 2 minutes), paste your key into TOMTOM_API_KEY
+     in .env. Leave it blank and the demo still works — it just uses
+     realistic simulated traffic instead of live data.
+
+STEP 3 — INSTALL (one time)
+  npm install
+  pip install fastapi uvicorn xgboost scikit-learn pandas numpy
+
+STEP 4 — RUN (every time)
+  Terminal 1:   npm run ml     → (same as: python ml/hillsafe_ml.py)
+  Terminal 2:   npm start      → (same as: node server/server.js)
+
+STEP 5 — OPEN
+  http://localhost:3000                     → Main Website
+  http://localhost:3000/launcher.html       → 🚀 Project Launcher (all demos)
+  http://localhost:3000/dashboard.html      → Live vehicle dashboard
+  http://localhost:3000/simulation.html     → 17-phase 2D simulation
+  http://localhost:3000/driver_app.html     → Android PWA driver app
+  http://localhost:3000/hillsafe_realroad.html → Real road AI overlay
+  http://localhost:3000/api/health          → Quick server status check
+  http://localhost:3000/api/traffic         → Live traffic (all 8 zones)
+  http://localhost:3000/api/smart-route     → ML + traffic + weather reroute suggestions
+  http://localhost:3000/api/jam-clearance   → Predicted time until each zone clears
+  http://localhost:3000/api/daily-report    → Today's fleet-wide violation summary
+  http://localhost:3000/api/lane-marshal    → AI lane assignments for jammed zones
+  http://localhost:3000/api/v2v-safety-stats→ Prevented accidents + ECU-capped vehicles
+  http://localhost:3000/api/forensics       → Black box reconstruction of every incident
+  http://localhost:3000/api/overtakes       → Live overtake detection + speed assist
+  http://localhost:3000/api/routes          → 3 named highway corridors (11 zones)
+  http://localhost:3000/api/jam-root-cause  → Infrastructure vs behavioural diagnosis
+  http://localhost:3000/api/v2v-network-health → V2V fault-tolerance / fallback demo
+  http://localhost:5000/docs                → ML API documentation
+
+───────────────────────────────────────────────────────────────
+TROUBLESHOOTING
+  • "Cannot reach server" banner →
+      node isn't running, or you opened the HTML file directly
+      by double-clicking it. Always use http://localhost:3000
+      in the browser address bar, never file://.
+
+  • "Port 3000 already in use" →
+      An older server is still running in another terminal tab.
+      Windows: netstat -ano | findstr :3000
+               taskkill /PID <the_number_shown> /F
+      Then run npm start again.
+
+  • MySQL ETIMEDOUT →
+      .env must have DB_HOST=127.0.0.1 (not localhost).
+
+  • "Access denied for user 'root'@'localhost'" (MySQL Workbench users) →
+      Your .env DB_PASSWORD doesn't match your real MySQL root password.
+      Open MySQL Workbench, note the exact password you use to connect,
+      put that same password in .env — it can't be blank like XAMPP.
+
+  • npm blocked (PowerShell) →
+      Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+  • Buttons don't respond / same window →
+      Make sure you're using the files from THIS package — older
+      copies had a button that browsers silently blocked.
+
+  • No voice alerts →
+      Click once anywhere on the page first (browser autoplay
+      rules), and check your volume.
+
+DOCS
+  docs/DEMO_SCRIPT.md               → step-by-step university demo runbook
+  docs/HillSafe_AI_Presentation.pptx → 14-slide deck with speaker notes
+  docs/PROJECT_BRIEFING.md          → full technical briefing
+  README.md                         → GitHub documentation
+
+Built by Safeer Ahmed · B.Tech CSE · J&K India
+github.com/safeerahmed8/Hill_Safe_AI
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,31 @@
+# ═══════════════════════════════════════════════════════
+#  HillSafe AI — Environment Variables
+#  Copy this file: cp env_example.txt .env
+#  Then fill in your actual values
+# ═══════════════════════════════════════════════════════
+
+# ── DATABASE ─────────────────────────────────────────
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=your_mysql_password_here
+DB_NAME=hill_safe_ai
+DB_PORT=3306
+
+# ── SERVER ───────────────────────────────────────────
+PORT=3000
+NODE_ENV=development
+
+# ── TWILIO SMS (optional) ────────────────────────────
+# Sign up free: https://www.twilio.com/try-twilio
+TWILIO_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_TOKEN=your_auth_token_here
+TWILIO_PHONE=+1234567890
+
+# ── LIVE TRAFFIC — TomTom (optional) ─────────────────
+# Sign up free (no credit card, 2 minutes): https://developer.tomtom.com/
+# Free tier: 2,500 requests/day — plenty for a demo.
+# Leave blank to run in simulated-traffic mode (still fully working demo).
+TOMTOM_API_KEY=
+
+# ── ML API ───────────────────────────────────────────
+ML_API_URL=http://localhost:5000

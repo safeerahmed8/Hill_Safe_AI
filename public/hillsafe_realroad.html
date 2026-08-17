@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HillSafe AI — Live Road Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;color:#b8d8f0}
+
+/* VIDEO BACKGROUND */
+#yt-wrap{position:fixed;inset:0;z-index:0;overflow:hidden}
+#yt-wrap iframe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:100vw;height:56.25vw;min-height:100vh;min-width:177.78vh;pointer-events:none}
+
+/* DARK OVERLAY so UI is readable */
+#overlay{position:fixed;inset:0;z-index:1;background:rgba(2,8,18,.45)}
+
+/* CANVAS for vehicle dots */
+#dotCanvas{position:fixed;inset:0;z-index:2;pointer-events:none}
+
+/* ALL UI ABOVE CANVAS */
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.12}}
+@keyframes slideR{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes siren{0%{background:rgba(255,32,32,.9)}50%{background:rgba(0,68,255,.9)}}
+@keyframes scanline{from{top:52px}to{top:100vh}}
+@keyframes wavebar{0%,100%{height:4px}50%{height:20px}}
+@keyframes glitch{0%,95%{transform:none}96%{transform:translate(-2px,1px)}98%{transform:translate(2px,-1px)}100%{transform:none}}
+
+.scan{position:fixed;height:1px;left:0;right:0;background:rgba(0,200,255,.06);pointer-events:none;z-index:3;animation:scanline 8s linear infinite}
+
+/* CCTV FRAME CORNERS */
+.cctv-corner{position:fixed;z-index:3;width:24px;height:24px;border-color:#00c8ff;border-style:solid;opacity:.7}
+.cc-tl{top:52px;left:0;border-width:2px 0 0 2px}
+.cc-tr{top:52px;right:0;border-width:2px 2px 0 0}
+.cc-bl{bottom:0;left:0;border-width:0 0 2px 2px}
+.cc-br{bottom:0;right:0;border-width:0 2px 2px 0}
+
+/* TOP BAR */
+#top{position:fixed;top:0;left:0;right:0;height:52px;z-index:10;
+  background:rgba(0,0,0,.88);border-bottom:1px solid rgba(0,200,255,.2);
+  display:flex;align-items:center;padding:0 14px;gap:12px;backdrop-filter:blur(12px)}
+.tl{display:flex;align-items:center;gap:7px}
+.ti{width:30px;height:30px;background:linear-gradient(135deg,#00c8ff,#00ff88);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:16px}
+.tt{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:#00c8ff;letter-spacing:2px}
+.ts{font-size:7px;color:#4e7899;letter-spacing:2px;display:block}
+.tmid{flex:1;text-align:center}
+.tmidt{font-family:'Orbitron',monospace;font-size:11px;color:#00c8ff;letter-spacing:2px;font-weight:700}
+.tmids{font-size:8px;color:#4e7899;letter-spacing:1.5px;margin-top:1px}
+.top-r{display:flex;gap:6px;align-items:center}
+.rd{width:9px;height:9px;border-radius:50%;background:#ff2020;animation:bk .8s infinite}
+.tbtn{padding:5px 11px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid;transition:all .2s;font-family:'Rajdhani',sans-serif}
+.tbtn-g{background:rgba(0,230,118,.1);color:#00e676;border-color:rgba(0,230,118,.3)}
+.tbtn-b{background:rgba(0,200,255,.08);color:#00c8ff;border-color:rgba(0,200,255,.25)}
+.tbtn-r{background:rgba(255,32,32,.1);color:#ff6060;border-color:rgba(255,32,32,.3)}
+.tbtn:hover{filter:brightness(1.25)}
+
+/* CAMERA LABEL (top center overlay) */
+#camTag{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:10;
+  display:flex;gap:8px;align-items:center;animation:glitch 8s infinite}
+.ct-rec{width:8px;height:8px;border-radius:50%;background:#ff2020;animation:bk .8s infinite}
+.ct-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.65);letter-spacing:2px}
+
+/* LEFT PANEL */
+#LP{position:fixed;top:60px;left:10px;width:210px;z-index:10;display:flex;flex-direction:column;gap:7px}
+.box{background:rgba(0,0,0,.82);border:1px solid rgba(0,200,255,.18);border-radius:6px;
+  padding:9px 11px;backdrop-filter:blur(10px)}
+.bh{font-family:'Orbitron',monospace;font-size:7px;color:#4e7899;letter-spacing:2px;margin-bottom:7px;display:flex;align-items:center;gap:4px}
+.bd{width:5px;height:5px;border-radius:50%}
+
+/* Vehicle rows */
+.vi{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(0,200,255,.06)}
+.vi:last-child{border-bottom:none}
+.vd{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.vp{font-family:'Share Tech Mono',monospace;font-size:8px;color:#b8d8f0;flex:1}
+.vs2{font-family:'Share Tech Mono',monospace;font-size:9px}
+.vst{font-size:7px;padding:1px 5px;border-radius:2px}
+
+/* Weather mini */
+.wr{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(0,200,255,.06)}
+.wr:last-child{border-bottom:none}
+.wz{font-size:9px;color:#4e7899}
+.wv{font-family:'Share Tech Mono',monospace;font-size:9px}
+.wm{font-size:7px;padding:1px 5px;border-radius:2px}
+.wm-d{background:rgba(255,32,32,.12);color:#ff2020;animation:bk .7s infinite;border:1px solid rgba(255,32,32,.25)}
+.wm-w{background:rgba(255,140,0,.1);color:#ff8c00;border:1px solid rgba(255,140,0,.25)}
+.wm-ok{background:rgba(0,230,118,.08);color:#00e676;border:1px solid rgba(0,230,118,.2)}
+
+/* AI scores */
+.ai-r{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.ai-id{font-family:'Share Tech Mono',monospace;font-size:8px;color:#4e7899;width:42px}
+.ai-bw{flex:1;height:4px;background:rgba(0,200,255,.08);border-radius:2px;overflow:hidden}
+.ai-bf{height:100%;border-radius:2px;transition:width .6s,background .6s}
+.ai-sc{font-family:'Share Tech Mono',monospace;font-size:8px;width:24px;text-align:right}
+
+/* RIGHT PANEL */
+#RP{position:fixed;top:60px;right:10px;width:248px;z-index:10;display:flex;flex-direction:column;gap:7px}
+.acard{background:rgba(0,0,0,.88);border:1px solid;border-left-width:4px;border-radius:6px;
+  padding:7px 10px;animation:slideR .35s ease;backdrop-filter:blur(10px)}
+.acard.acc{border-color:rgba(255,32,32,.3);border-left-color:#ff2020;background:rgba(255,32,32,.06)}
+.acard.warn{border-color:rgba(255,140,0,.25);border-left-color:#ff8c00}
+.acard.info{border-color:rgba(0,200,255,.2);border-left-color:#00c8ff}
+.acard.grn{border-color:rgba(0,230,118,.2);border-left-color:#00e676;background:rgba(0,255,136,.04)}
+.acard.corr{border-color:rgba(0,255,136,.25);border-left-color:#00ff88;background:rgba(0,255,136,.06)}
+.ac-t{font-family:'Share Tech Mono',monospace;font-size:7px;color:#4e7899}
+.ac-ti{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;margin:1px 0}
+.acc .ac-ti{color:#ff2020}.warn .ac-ti{color:#ff8c00}.info .ac-ti{color:#00c8ff}
+.grn .ac-ti{color:#00e676}.corr .ac-ti{color:#00ff88}
+.ac-m{font-size:9px;color:#b8d8f0;line-height:1.4}
+
+/* EMERGENCY BANNER */
+#emer{position:fixed;top:58px;left:50%;transform:translateX(-50%);
+  color:#fff;font-family:'Orbitron',monospace;font-size:11px;font-weight:900;
+  padding:9px 28px;border-radius:5px;z-index:20;display:none;white-space:nowrap;
+  letter-spacing:1px;animation:siren .5s infinite,pulse 1s infinite;
+  box-shadow:0 4px 24px rgba(255,32,32,.7)}
+#emer.on{display:block}
+
+/* VOICE WIDGET */
+#vw{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.94);border:1px solid rgba(255,32,32,.45);border-radius:10px;
+  padding:10px 20px;z-index:20;display:none;min-width:340px;max-width:600px;
+  text-align:center;backdrop-filter:blur(14px);box-shadow:0 4px 20px rgba(255,32,32,.2)}
+#vw.on{display:block;animation:pop .3s ease}
+.vwi{font-size:24px;margin-bottom:3px}
+.vwl{font-family:'Orbitron',monospace;font-size:8px;color:#ff2020;letter-spacing:2px;margin-bottom:4px}
+.vwt{font-size:11px;color:#b8d8f0;line-height:1.55;max-width:520px}
+.vwb{display:flex;align-items:flex-end;justify-content:center;gap:3px;margin-top:7px;height:22px}
+.vbb{width:3px;background:#ff2020;border-radius:2px;animation:wavebar .4s ease infinite}
+
+/* NARRATION */
+#nar{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.94);border:1px solid rgba(0,200,255,.25);border-top:2.5px solid #00c8ff;
+  border-radius:6px;padding:8px 20px;z-index:20;min-width:420px;max-width:700px;
+  text-align:center;backdrop-filter:blur(14px);transition:border-top-color .4s}
+#nar.d{border-top-color:#ff2020}#nar.g{border-top-color:#00e676}#nar.w{border-top-color:#ff8c00}
+.nt{font-family:'Orbitron',monospace;font-size:8px;color:#00c8ff;letter-spacing:2px;margin-bottom:2px}
+#nar.d .nt{color:#ff2020}#nar.g .nt{color:#00e676}#nar.w .nt{color:#ff8c00}
+.nx{font-size:11px;color:#b8d8f0;line-height:1.55}
+
+/* PROGRESS */
+#prog{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(0,200,255,.1);z-index:20}
+#pf{height:100%;background:linear-gradient(90deg,#00c8ff,#00ff88);width:0%;transition:width .2s}
+
+/* IMPACT */
+#impf{position:fixed;inset:0;background:rgba(255,32,32,0);z-index:25;pointer-events:none;transition:background .08s}
+#impf.on{background:rgba(255,32,32,.45)}
+
+/* REPLAY */
+#rep{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(10px)}
+.rep-t{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:#00ff88;letter-spacing:3px}
+.rep-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:540px;width:90%}
+.rep-c{background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;padding:12px;text-align:center}
+.rep-n{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:#00c8ff}
+.rep-l{font-size:9px;color:#4e7899;margin-top:3px;letter-spacing:1px}
+.rep-n.r{color:#ff2020}.rep-n.g{color:#00e676}.rep-n.a{color:#ff8c00}.rep-n.y{color:#ffd700}
+.rep-btn{padding:11px 26px;border-radius:6px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
+  cursor:pointer;background:rgba(0,200,255,.1);color:#00c8ff;border:1px solid rgba(0,200,255,.3)}
+.rep-btn:hover{background:rgba(0,200,255,.22)}
+
+/* VIDEO SELECTOR */
+#vidSel{position:fixed;bottom:56px;right:10px;z-index:20;
+  background:rgba(0,0,0,.9);border:1px solid rgba(0,200,255,.2);border-radius:8px;
+  padding:10px 12px;width:200px;backdrop-filter:blur(10px)}
+.vs-h{font-family:'Orbitron',monospace;font-size:8px;color:#4e7899;letter-spacing:2px;margin-bottom:7px}
+.vs-opt{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:4px;cursor:pointer;
+  font-size:10px;color:#b8d8f0;transition:all .15s;margin-bottom:3px;border:1px solid transparent}
+.vs-opt:hover,.vs-opt.sel{background:rgba(0,200,255,.1);border-color:rgba(0,200,255,.2);color:#00c8ff}
+.vs-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- REAL MOUNTAIN VIDEO BACKGROUND -->
+<div id="yt-wrap">
+  <iframe id="ytPlayer" frameborder="0" allow="autoplay;encrypted-media"
+    allowfullscreen title="J&K Mountain Road - NH44"></iframe>
+</div>
+<div id="overlay"></div>
+
+<!-- CCTV DOTS CANVAS -->
+<canvas id="dotCanvas"></canvas>
+
+<!-- CCTV CORNERS -->
+<div class="cctv-corner cc-tl"></div>
+<div class="cctv-corner cc-tr"></div>
+<div class="cctv-corner cc-bl"></div>
+<div class="cctv-corner cc-br"></div>
+<div class="scan"></div>
+
+<!-- CAMERA TAG -->
+<div id="camTag">
+  <div class="ct-rec"></div>
+  <div class="ct-txt" id="camTxt">● CAM-04 · BANIHAL PASS ZONE · NH-44 · LIVE MONITORING</div>
+</div>
+
+<!-- EMERGENCY -->
+<div id="emer">🚨 ACCIDENT DETECTED — BANIHAL PASS — HILLSAFE AI RESPONSE ACTIVATED</div>
+<div id="impf"></div>
+
+<!-- TOP BAR -->
+<div id="top">
+  <div class="tl"><div class="ti">🏔</div>
+    <div><span class="tt">HILLSAFE AI</span><span class="ts">LIVE MOUNTAIN ROAD MONITORING · J&K INDIA</span></div>
+  </div>
+  <div class="tmid">
+    <div class="tmidt" id="phT">REAL FOOTAGE · AI MONITORING ACTIVE</div>
+    <div class="tmids" id="phS">NH-44 Jammu–Srinagar · Banihal Pass · Live AI overlay</div>
+  </div>
+  <div class="top-r">
+    <div class="rd"></div>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#ff2020;letter-spacing:1px">● LIVE</span>
+    <button class="tbtn tbtn-g" onclick="startSim()">▶ Play Sim</button>
+    <button class="tbtn tbtn-b" onclick="restartSim()">↺ Reset</button>
+    <button class="tbtn tbtn-r" onclick="window.close()">✕ Close</button>
+  </div>
+</div>
+
+<!-- LEFT -->
+<div id="LP">
+  <div class="box">
+    <div class="bh"><div class="bd" style="background:#ff2020;box-shadow:0 0 4px #ff2020"></div>🚗 LIVE VEHICLES</div>
+    <div id="vList"></div>
+  </div>
+  <div class="box">
+    <div class="bh"><div class="bd" style="background:#a855f7"></div>🤖 AI DANGER SCORES</div>
+    <div id="aiList"></div>
+  </div>
+  <div class="box">
+    <div class="bh"><div class="bd" style="background:#ff8c00"></div>🌦 WEATHER</div>
+    <div id="wxList"></div>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div id="RP">
+  <div class="bh" style="padding:0 4px 6px"><div class="bd" style="background:#ff2020;box-shadow:0 0 4px #ff2020"></div><span style="font-family:'Orbitron',monospace;font-size:7px;color:#4e7899;letter-spacing:2px">⚡ LIVE ALERT LOG</span></div>
+  <div id="alog"></div>
+</div>
+
+<!-- VIDEO SELECTOR -->
+<div id="vidSel">
+  <div class="vs-h">📹 SELECT ROAD FEED</div>
+  <div class="vs-opt sel" onclick="loadVid('5QLM9a7MpOs',this)"><div class="vs-dot" style="background:#ff2020"></div>NH-44 Banihal Section</div>
+  <div class="vs-opt" onclick="loadVid('8-VziMykIPs',this)"><div class="vs-dot" style="background:#ff8c00"></div>Zoji La Pass</div>
+  <div class="vs-opt" onclick="loadVid('SaWdx20Cw5A',this)"><div class="vs-dot" style="background:#00e676"></div>Leh–Srinagar Route</div>
+  <div class="vs-opt" onclick="loadVid('w7nxKXvokJU',this)"><div class="vs-dot" style="background:#00c8ff"></div>Kashmir Valley</div>
+  <a id="ytFallbackLink" href="https://www.youtube.com/watch?v=5QLM9a7MpOs" target="_blank"
+     style="display:block;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,200,255,.12);
+     font-size:9px;color:var(--tx2);text-decoration:none">↗ If video doesn't load, open on YouTube</a>
+</div>
+
+<!-- VOICE -->
+<div id="vw">
+  <div class="vwi" id="vwi">🔊</div>
+  <div class="vwl">🎙 HILLSAFE AI HINDI VOICE ALERT</div>
+  <div class="vwt" id="vwt">Alert</div>
+  <div class="vwb">
+    <div class="vbb" style="animation-delay:0s;animation-duration:.3s"></div>
+    <div class="vbb" style="animation-delay:.1s;animation-duration:.5s"></div>
+    <div class="vbb" style="animation-delay:.2s;animation-duration:.4s"></div>
+    <div class="vbb" style="animation-delay:.05s;animation-duration:.35s"></div>
+    <div class="vbb" style="animation-delay:.15s;animation-duration:.6s"></div>
+    <div class="vbb" style="animation-delay:.25s;animation-duration:.45s"></div>
+    <div class="vbb" style="animation-delay:.1s;animation-duration:.5s"></div>
+    <div class="vbb" style="animation-delay:.2s;animation-duration:.38s"></div>
+    <div class="vbb" style="animation-delay:.08s;animation-duration:.42s"></div>
+    <div class="vbb" style="animation-delay:.18s;animation-duration:.55s"></div>
+  </div>
+</div>
+
+<!-- NARRATION -->
+<div id="nar">
+  <div class="nt" id="nT">HILLSAFE AI · REAL ROAD MONITORING</div>
+  <div class="nx" id="nX">Real NH-44 footage. HillSafe AI vehicle tracking overlay active. Press ▶ Play Sim for full incident simulation. Change feed using selector (bottom right).</div>
+</div>
+
+<!-- PROGRESS -->
+<div id="prog"><div id="pf"></div></div>
+
+<!-- REPLAY -->
+<div id="rep">
+  <div class="rep-t">🏁 SIMULATION COMPLETE</div>
+  <div class="rep-g">
+    <div class="rep-c"><div class="rep-n a">11 min</div><div class="rep-l">RESPONSE</div></div>
+    <div class="rep-c"><div class="rep-n g">23 min</div><div class="rep-l">SAVED</div></div>
+    <div class="rep-c"><div class="rep-n r">1</div><div class="rep-l">ACCIDENTS</div></div>
+    <div class="rep-c"><div class="rep-n g">5</div><div class="rep-l">ALERTED</div></div>
+    <div class="rep-c"><div class="rep-n y">₹3,000</div><div class="rep-l">CHALLAN</div></div>
+    <div class="rep-c"><div class="rep-n g">1</div><div class="rep-l">LIFE SAVED</div></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="rep-btn" onclick="restartSim()">↺ Watch Again</button>
+    <button class="rep-btn" onclick="window.close()">✕ Close</button>
+  </div>
+</div>
+
+<script>
+// ── VIDEO PLAYER ──────────────────────────────────────────────
+const VIDEOS = {
+  '5QLM9a7MpOs': 'NH-44 Banihal Section',
+  '8-VziMykIPs': 'Zoji La Pass · Ladakh',
+  'SaWdx20Cw5A': 'Leh–Srinagar via Zojila',
+  'w7nxKXvokJU': 'Kashmir Valley Tour',
+};
+let curVid = '5QLM9a7MpOs';
+
+function loadVid(id, btn) {
+  curVid = id;
+  document.querySelectorAll('.vs-opt').forEach(o=>o.classList.remove('sel'));
+  if(btn) btn.classList.add('sel');
+  const lbl = VIDEOS[id] || 'Mountain Road';
+  document.getElementById('camTxt').textContent = `● CAM-04 · ${lbl.toUpperCase()} · LIVE MONITORING`;
+  const fb = document.getElementById('ytFallbackLink');
+  if(fb) fb.href = `https://www.youtube.com/watch?v=${id}`;
+  const src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&iv_load_policy=3&start=5`;
+  document.getElementById('ytPlayer').src = src;
+}
+loadVid(curVid, null);
+
+// ── CANVAS DOTS ───────────────────────────────────────────────
+const canvas = document.getElementById('dotCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+// Simulated vehicles moving over the road visible in video
+// Positions as % of screen (centered on where road would be in NH-44 footage)
+const VDATA = [
+  { id:'VH-001', plate:'JK-02-T-1234', name:'Rajinder Kumar', blood:'B+',
+    col:'#00e676', spd:42, x:.28, y:.58, vx:.0012, vy:-.0006, isAcc:false },
+  { id:'VH-002', plate:'JK-02-B-5567', name:'Mohammed Iqbal', blood:'O+',
+    col:'#ff5020', spd:72, x:.38, y:.52, vx:.0018, vy:-.0009, isAcc:true },
+  { id:'VH-003', plate:'JK-09-CB-7890', name:'Arjun Sharma', blood:'A+',
+    col:'#4fc3f7', spd:44, x:.52, y:.47, vx:.0011, vy:-.0006, isAcc:false },
+  { id:'VH-004', plate:'JK-14-DC-2345', name:'Abdul Rashid', blood:'O-',
+    col:'#a855f7', spd:36, x:.63, y:.45, vx:.0009, vy:-.0005, isAcc:false },
+  { id:'VH-005', plate:'JK-06-MN-0047', name:'Priya Singh', blood:'B-',
+    col:'#ffd700', spd:48, x:.72, y:.44, vx:.0012, vy:-.0006, isAcc:false },
+];
+let vehs = VDATA.map(d=>({...d, ox:d.x, oy:d.y, crashed:false, pulled:false, alertPulse:0, aiScore:Math.random()*.25}));
+let ambulance = { x:.08, y:.72, vx:.0016, vy:-.0008, active:false };
+
+function drawDots(t) {
+  ctx.clearRect(0,0,W,H);
+  if(!simRunning&&t<.1) return;
+
+  // Road line overlay (approximate where road is in video)
+  ctx.beginPath();
+  ctx.moveTo(W*.08, H*.82); ctx.bezierCurveTo(W*.2,H*.72, W*.35,H*.60, W*.55,H*.48);
+  ctx.bezierCurveTo(W*.68,H*.42, W*.82,H*.40, W*.96,H*.40);
+  ctx.strokeStyle='rgba(0,200,255,0.15)';ctx.lineWidth=18;ctx.stroke();
+  ctx.strokeStyle='rgba(0,200,255,0.08)';ctx.lineWidth=26;ctx.stroke();
+
+  // Danger zone at Banihal (roughly at 55% x, 47% y)
+  const pulse=.5+.5*Math.sin(Date.now()/400);
+  ctx.beginPath();ctx.arc(W*.42,H*.50,30+pulse*8,0,Math.PI*2);
+  ctx.strokeStyle=`rgba(255,32,32,${.4+pulse*.35})`;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=`rgba(255,32,32,${.08+pulse*.05})`;ctx.fill();
+  ctx.font='10px Share Tech Mono';ctx.fillStyle='rgba(255,100,100,.8)';ctx.textAlign='center';
+  ctx.fillText('⚠ BANIHAL PASS',W*.42,H*.50-36);
+
+  // Vehicle dots
+  vehs.forEach(v=>{
+    if(v.crashed){
+      // Show crash at fixed spot
+      const cx=W*.42,cy=H*.50;
+      ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,32,32,${.7+.3*Math.sin(Date.now()/300)})`;ctx.fill();
+      ctx.font='16px Arial';ctx.textAlign='center';ctx.fillText('💥',cx,cy+6);
+      ctx.font='9px Share Tech Mono';ctx.fillStyle='#ff2020';ctx.fillText(v.id,cx,cy-14);
+      return;
+    }
+    const px=v.x*W, py=v.y*H;
+
+    // Ring on alert
+    if(v.alertPulse>0){
+      const r=(1-v.alertPulse)*28;
+      ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(255,140,0,${v.alertPulse*.8})`;ctx.lineWidth=2;ctx.stroke();
+      v.alertPulse=Math.max(0,v.alertPulse-.025);
+    }
+
+    // Dot
+    ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);
+    ctx.fillStyle=v.col;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1;ctx.stroke();
+
+    // Label
+    ctx.font='8px Share Tech Mono';ctx.fillStyle=v.col;ctx.textAlign='center';
+    ctx.fillText(v.id,px,py-11);
+    ctx.font='7px Share Tech Mono';ctx.fillStyle='rgba(255,255,255,.6)';
+    ctx.fillText(Math.round(v.spd)+' km/h',px,py+18);
+
+    // Speed badge if over limit
+    if(v.spd>60&&v.isAcc&&simPhase>=1){
+      ctx.fillStyle='rgba(255,32,32,.85)';ctx.fillRect(px-20,py-28,40,10);
+      ctx.font='7px Orbitron,monospace';ctx.fillStyle='#fff';ctx.textAlign='center';
+      ctx.fillText('OVERSPD',px,py-21);
+    }
+    // AI score badge
+    if(v.aiScore>.6&&!v.crashed){
+      const sc=v.aiScore;const col=sc>.8?'#ff2020':sc>.6?'#ff8c00':'#ffd700';
+      ctx.font='7px Share Tech Mono';ctx.fillStyle=col;ctx.textAlign='center';
+      ctx.fillText('AI:'+sc.toFixed(2),px,py+27);
+    }
+    ctx.textAlign='left';
+  });
+
+  // Ambulance dot
+  if(ambulance.active){
+    const ax=ambulance.x*W, ay=ambulance.y*H;
+    ctx.beginPath();ctx.arc(ax,ay,9,0,Math.PI*2);
+    ctx.fillStyle=Math.floor(Date.now()/300)%2===0?'#ff2020':'#ffffff';ctx.fill();
+    ctx.font='9px Share Tech Mono';ctx.fillStyle='#00e676';ctx.textAlign='center';
+    ctx.fillText('🚑 AMBU',ax,ay-13);
+    // Green trail
+    ctx.strokeStyle='rgba(0,230,118,.4)';ctx.lineWidth=8;
+    ctx.beginPath();ctx.moveTo(ax-40,ay+20);ctx.lineTo(ax,ay);ctx.stroke();
+    ctx.textAlign='left';
+  }
+}
+
+// ── AI / WEATHER UI ───────────────────────────────────────────
+const WX=[{z:'🌫️ Banihal',c:'Fog 8°C',m:'×2.0',cl:'wm-d'},
+  {z:'❄️ Zoji La',c:'Snow -2°C',m:'×2.8',cl:'wm-d'},
+  {z:'🌧️ Rohtang',c:'Rain 5°C',m:'×1.8',cl:'wm-w'},
+  {z:'☀️ Patnitop',c:'Clear 18°C',m:'×1.0',cl:'wm-ok'}];
+
+function renderWx(){
+  document.getElementById('wxList').innerHTML=WX.map(w=>
+    `<div class="wr"><div class="wz">${w.z}</div>
+     <div class="wv">${w.c} <span class="wm ${w.cl}">${w.m}</span></div></div>`).join('');
+}
+
+function renderAI(){
+  document.getElementById('aiList').innerHTML=vehs.map(v=>{
+    const sc=v.aiScore;const col=sc>=.7?'#ff2020':sc>=.4?'#ff8c00':'#00e676';
+    return`<div class="ai-r"><div class="ai-id">${v.id}</div>
+      <div class="ai-bw"><div class="ai-bf" style="width:${sc*100}%;background:${col}"></div></div>
+      <div class="ai-sc" style="color:${col}">${sc.toFixed(2)}</div></div>`;
+  }).join('');
+}
+
+function renderVehs(){
+  document.getElementById('vList').innerHTML=vehs.filter(v=>v.id!=='VH-006').map(v=>{
+    const col=v.crashed?'#ff2020':v.pulled?'#ffd700':v.alertPulse>0?'#ff8c00':'#00e676';
+    const st=v.crashed?'CRASH':v.pulled?'PULLED':v.alertPulse>0?'ALERT':'OK';
+    return`<div class="vi">
+      <div class="vd" style="background:${col}"></div>
+      <div class="vp">${v.id}</div>
+      <div class="vs2" style="color:${col}">${Math.round(v.spd)} km/h</div>
+      <div class="vst" style="background:${col}22;color:${col}">${st}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── ALERT LOG ─────────────────────────────────────────────────
+function addAlert(cls,title,msg){
+  const log=document.getElementById('alog');
+  const el=document.createElement('div');el.className=`acard ${cls}`;
+  el.innerHTML=`<div class="ac-t">${new Date().toLocaleTimeString()}</div>
+    <div class="ac-ti">${title}</div><div class="ac-m">${msg}</div>`;
+  log.insertBefore(el,log.firstChild);
+  while(log.children.length>8)log.removeChild(log.lastChild);
+}
+
+// ── VOICE ────────────────────────────────────────────────────
+let vt=null;
+function speak(text,icon='🔊',rate=.84){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='en-IN';u.rate=rate;u.pitch=1.1;u.volume=1;
+  const vs=speechSynthesis.getVoices();const v=vs.find(x=>x.lang.startsWith('en-IN'))||null;
+  setTimeout(()=>{if(v)u.voice=v;speechSynthesis.speak(u);},80);
+  document.getElementById('vwi').textContent=icon;
+  document.getElementById('vwt').textContent=text;
+  const vw=document.getElementById('vw');vw.classList.add('on');
+  if(vt)clearTimeout(vt);vt=setTimeout(()=>vw.classList.remove('on'),Math.max(5000,text.length*95));
+}
+
+const V={
+  start :'Real NH-44 Banihal Pass footage. HillSafe AI vehicle tracking overlay active. 6 vehicles monitored in real time.',
+  warn  :'Khatre ki chetavni! Vaahan JK-02-B-5567 Banihal Pass mein 72 kilometre ki raftaar se jaa raha hai! Fog zone mein! Turant raftaar kam karo!',
+  brake :'Khatara! Khatara! Vaahan JK-02 ke brake fail! Sabhi paas ke vaahan turant raasta do! Baeen taraf hato!',
+  crash :'Aapatkaal! Aapatkaal! Banihal Pass par bhayankar durghatna! Mohammed Iqbal ko tatkal sahayata chahiye! Ambulance ravana ho rahi hai!',
+  nearby:'Suchana! Paas ke sabhi vaahan! Durghatna hui hai! Raftaar kam karo! Yatayat niyantran sakriya!',
+  corr  :'Green Corridor sakriya! SMHS Srinagar se ambulance aa rahi hai! Turant baeen taraf hato aur ruko! Raasta khali karo!',
+  done  :'Mission poora! Mariij 11 minute mein aspatal pahuncha! HillSafe AI ne 23 minute bachaye!',
+};
+
+// ── SIMULATION ────────────────────────────────────────────────
+let simRunning=false,simT=0,simPhase=0;
+const TOTAL=40;const done={};
+const k=s=>!done[s],m=s=>{done[s]=true;};
+
+function setNar(title,text,cls=''){
+  document.getElementById('nar').className=cls?'nar '+cls:'';
+  document.getElementById('nT').textContent=title;
+  document.getElementById('nX').textContent=text;
+}
+
+function simFrame(t,dt){
+  document.getElementById('pf').style.width=(t/TOTAL*100)+'%';
+
+  if(t<4){simPhase=0;
+    if(k('s0')){m('s0');setNar('REAL FOOTAGE — AI MONITORING ACTIVE','6 vehicles tracked on NH-44 via HillSafe AI. Real Banihal Pass road in background. Fog zone danger ×2.0 active.');
+      speak(V.start,'🏔',.84);
+      addAlert('info','🏔 MONITORING ACTIVE','Real NH-44 footage · 6 vehicles live · Fog ×2.0');
+      document.getElementById('phT').textContent='PHASE 1 — NORMAL TRAFFIC MONITORING';
+    }
+    vehs.forEach(v=>{v.x+=v.vx*dt*30;v.y+=v.vy*dt*30;});
+  }
+
+  else if(t<8){simPhase=1;
+    if(k('s1')){m('s1');
+      vehs.find(v=>v.isAcc).aiScore=.87;
+      setNar('PHASE 2 — ⚠️ OVERSPEED ON REAL ROAD','Bus VH-002 doing 72 km/h on real Banihal Pass road. AI score: 0.87 CRITICAL. You can see the REAL road conditions in background!','w');
+      speak(V.warn,'⚠️',.78);
+      addAlert('warn','⚠️ OVERSPEED — VH-002','72 km/h · Fog zone · Real road · AI: 0.87 CRITICAL');
+      document.getElementById('phT').textContent='PHASE 2 — ⚠️ OVERSPEED ALERT';
+    }
+    vehs.forEach(v=>{v.x+=v.vx*dt*(v.isAcc?2.2:25)*dt;v.y+=v.vy*dt*(v.isAcc?2.2:25)*dt;});
+    const bus=vehs.find(v=>v.isAcc);if(bus)bus.spd=Math.min(78,bus.spd+dt*8);
+    renderAI();
+  }
+
+  else if(t<12){simPhase=2;
+    if(k('s2')){m('s2');
+      speak(V.brake,'🚨',.75);
+      addAlert('acc','🚨 BRAKE FAILURE — VH-002','Cascade alert to 4 vehicles in <0.5 seconds!');
+      vehs.filter(v=>!v.isAcc).forEach(v=>{v.alertPulse=1;});
+      document.getElementById('phT').textContent='PHASE 3 — 🚨 BRAKE FAILURE + CASCADE';
+      setNar('PHASE 3 — BRAKE FAILURE ON REAL MOUNTAIN ROAD','Brake failure on REAL Banihal Pass road! You can see exactly how dangerous this road is. HillSafe AI cascade fires instantly!','d');
+    }
+    vehs.forEach(v=>{
+      v.x+=v.vx*dt*(v.isAcc?2.5:0.3)*30;v.y+=v.vy*dt*(v.isAcc?2.5:0.3)*30;
+    });
+  }
+
+  else if(t<14){simPhase=3;
+    if(k('s3')){m('s3');
+      const bus=vehs.find(v=>v.isAcc);if(bus){bus.crashed=true;bus.spd=0;}
+      document.getElementById('emer').classList.add('on');
+      setTimeout(()=>document.getElementById('emer').classList.remove('on'),6000);
+      document.getElementById('impf').classList.add('on');
+      setTimeout(()=>document.getElementById('impf').classList.remove('on'),250);
+      setTimeout(()=>{document.getElementById('impf').classList.add('on');setTimeout(()=>document.getElementById('impf').classList.remove('on'),180);},420);
+      speak(V.crash,'🚨',.73);
+      setTimeout(()=>speak(V.nearby,'📡',.78),3500);
+      addAlert('acc','💥 ACCIDENT — REAL BANIHAL PASS','Mohammed Iqbal · O+ · G-Force 8.2G · 33.5120°N');
+      document.getElementById('phT').textContent='💥 PHASE 4 — ACCIDENT ON REAL ROAD';
+      setNar('💥 ACCIDENT ON REAL BANIHAL PASS ROAD','This is the ACTUAL road you see in the background! HillSafe AI responds in milliseconds on this exact mountain curve!','d');
+    }
+    vehs.filter(v=>!v.crashed).forEach(v=>{v.spd=Math.max(0,v.spd-dt*22);});
+  }
+
+  else if(t<18){simPhase=4;
+    if(k('s4')){m('s4');
+      speak(V.corr,'🚑',.78);
+      addAlert('corr','🚑 GREEN CORRIDOR','SMHS → Banihal Pass · Clear real mountain road');
+      vehs.filter(v=>!v.crashed).forEach(v=>{v.pulled=true;});
+      ambulance.active=true;
+      document.getElementById('phT').textContent='PHASE 5 — 🚑 GREEN CORRIDOR ACTIVE';
+      setNar('PHASE 5 — AMBULANCE RACING ON THIS REAL ROAD','The ambulance will race through the REAL mountain road you see in background. Green Corridor cleared this exact route!','g');
+    }
+    ambulance.x+=ambulance.vx*dt*30;ambulance.y+=ambulance.vy*dt*30;
+  }
+
+  else if(t<24){simPhase=5;
+    if(k('s5')){m('s5');
+      addAlert('grn','🏥 SMHS ALERTED','Blood O+ ready · Trauma bay open · Surgeon waiting');
+      document.getElementById('phT').textContent='PHASE 6 — AMBULANCE RACING ON REAL NH-44';
+    }
+    ambulance.x=Math.min(.42,ambulance.x+ambulance.vx*dt*25);
+    ambulance.y=Math.max(.50,ambulance.y+ambulance.vy*dt*25);
+  }
+
+  else{simPhase=6;
+    if(k('s6')){m('s6');
+      speak(V.done,'✅',.84);
+      addAlert('grn','✅ MISSION COMPLETE','Real road · 11 min response · 23 min saved');
+      document.getElementById('phT').textContent='✅ PHASE 7 — MISSION COMPLETE';
+      setNar('✅ MISSION COMPLETE — 11 MINUTES ON REAL ROAD','Patient reached hospital in 11 minutes on this real mountain road. HillSafe AI saved 23 minutes vs national average of 34.','g');
+    }
+    if(t>38&&k('end')){m('end');simRunning=false;document.getElementById('rep').style.display='flex';}
+  }
+
+  renderVehs();renderAI();
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────
+let last=null;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!last){last=ts;return;}
+  const dt=Math.min((ts-last)/1000,.05);last=ts;
+  if(simRunning&&simT<TOTAL){simT+=dt;simFrame(simT,dt);}
+  drawDots(simT);
+}
+
+function startSim(){
+  simRunning=true;
+  document.getElementById('phT').textContent='SIMULATION STARTING...';
+  addAlert('info','▶ SIMULATION STARTED','Real footage + AI overlay active');
+}
+
+function restartSim(){
+  simRunning=false;simT=0;simPhase=0;
+  Object.keys(done).forEach(k=>delete done[k]);
+  vehs=VDATA.map(d=>({...d,ox:d.x,oy:d.y,crashed:false,pulled:false,alertPulse:0,aiScore:Math.random()*.25}));
+  ambulance={x:.08,y:.72,vx:.0016,vy:-.0008,active:false};
+  document.getElementById('rep').style.display='none';
+  document.getElementById('emer').classList.remove('on');
+  document.getElementById('impf').classList.remove('on');
+  document.getElementById('vw').classList.remove('on');
+  document.getElementById('alog').innerHTML='';
+  document.getElementById('pf').style.width='0%';
+  document.getElementById('phT').textContent='REAL FOOTAGE · AI MONITORING ACTIVE';
+  document.getElementById('phS').textContent='Press ▶ Play Sim to begin';
+  setNar('HILLSAFE AI · REAL ROAD MONITORING','Real NH-44 footage. Press ▶ Play Sim for full incident simulation overlay.');
+  speechSynthesis.cancel();
+  renderWx();renderAI();renderVehs();
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+renderWx();renderAI();renderVehs();
+speechSynthesis.getVoices();setTimeout(()=>speechSynthesis.getVoices(),1000);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

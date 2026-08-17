@@ -1,0 +1,126 @@
+================================================================
+  HILLSAFE AI — GEMINI VIDEO GENERATION PROMPTS
+  Paste these directly in Gemini Videos section
+  Use "Pro" model for best quality
+================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 1 — NORMAL AI MONITORING (Background / Intro)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cinematic aerial drone shot slowly flying over a beautiful 4-lane divided highway cutting through the Himalayan mountains of Jammu and Kashmir, India. Snow-capped mountain peaks in background. Lush green valley below. Highway has 2 lanes each direction with a concrete central divider. 
+
+Multiple vehicles — white buses, colorful trucks, SUVs, and cars — moving at normal highway speeds (80-100 km/h). 
+
+Each vehicle has a glowing green digital holographic AI tracking label floating above it showing: plate number, speed in km/h, and a small green health bar. The labels pulse softly with cyan light. Blue digital grid lines overlay the road surface.
+
+Bottom of frame: dark semi-transparent banner reading "HillSafe AI — Mountain Road Safety System" in futuristic font. Top-right corner: "● MONITORING ACTIVE" pulsing green.
+
+Golden hour lighting. Slight morning mist in valleys. Cinematic quality. Photorealistic. 8K. No text generation errors.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 2 — BRAKE FAILURE AT 220 km/h (Main Incident)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Traffic surveillance cinematic footage of a 4-lane highway on mountain in J&K India. Camera angle: low and wide, slightly above road level.
+
+Scene begins: a white Mercedes bus traveling dangerously fast — much faster than other vehicles. A red pulsing holographic warning bubble above it shows "220 km/h — DANGER". AI alert badge turns RED and flashes "HILLSAFE AI: BRAKE FAILURE DETECTED".
+
+Suddenly the bus starts leaving long black tire skid marks. All other vehicles (trucks, cars, buses around it) instantly receive orange warning overlays. They begin braking and moving to road shoulders.
+
+A bright red emergency banner sweeps across the screen top to bottom: "🚨 BRAKE FAILURE CASCADE — ALL VEHICLES CLEAR ROAD". Red and blue emergency siren lights reflect off road surface.
+
+The bus crashes into road barrier — sparks, smoke, debris. Screen shakes once. 
+
+Cinematic slow-motion impact at 50% speed. Photorealistic. Detailed. Dramatic lighting.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 3 — AIR SUPPORT HELICOPTER (Emergency Response)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dramatic cinematic shot of a white medical emergency helicopter with red cross markings and "HillSafe AI Air Support" text flying fast over J&K mountain highway at sunrise.
+
+Below: 4-lane highway with accident scene. One bus crashed into barrier. Smoke rising. Emergency ambulances with red/blue flashing lights already at scene. Police vehicles creating perimeter. Road has been cleared — all other vehicles pulled to sides creating a green corridor.
+
+The helicopter descends with searchlight beam illuminating accident site below. Rotor blades cause dust and debris to swirl on road.
+
+Digital overlay on helicopter shows: "AIR RESPONSE UNIT — ETA 45 SECONDS". On road: green holographic corridor lines showing clear path.
+
+Top corner timer: "HillSafe AI RESPONSE TIME: 3m 42s vs National Avg: 34 min"
+
+Photorealistic. Golden morning light. Himalayan mountains backdrop. Cinematic grade.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 4 — MECHANICAL FAILURE ALERT SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Close-up cinematic shot inside a vehicle dashboard, then cuts to external traffic camera view. J&K mountain highway, 4 lanes.
+
+A green truck is driving normally when suddenly its dashboard inside shows warning lights — engine symbol, brake symbol all flashing red. From outside: the truck's AI tracking bubble changes from green to orange to red pulsing with text "⚠ MECHANICAL FAILURE — ENGINE FAULT CODE P0300".
+
+The truck begins to slow and moves to highway shoulder. Immediately, 5 vehicles behind it receive orange warning bubbles: "ALERT: Disabled vehicle ahead — reduce speed". Their AI tracking labels all turn yellow.
+
+Traffic Control Center notification appears (split screen): person at computer console with multiple monitors showing the highway. Alert sound visualizer pulses.
+
+A highway patrol police car with flashing lights approaches from distance. HillSafe AI system routes it automatically using glowing green arrow on road.
+
+Realistic, detailed, cinematic quality. Daytime. Clear weather.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 5 — GREEN CORRIDOR AMBULANCE RACING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Aerial drone shot following a white ambulance with flashing red/blue lights racing at high speed on a completely clear 4-lane mountain highway in J&K India. Speed: 95 km/h.
+
+The road ahead of ambulance glows GREEN — holographic "GREEN CORRIDOR ACTIVE" arrows point the way. No other vehicles on ambulance's lane — they have all pulled to the sides before the ambulance arrived.
+
+Behind the ambulance: the road is lined with vehicles on both shoulders — trucks, buses, cars — all with yellow/orange AI labels showing "CORRIDOR PROTOCOL — STATIONARY".
+
+Above the ambulance: a semi-transparent AI route line shows path to hospital. ETA counter: "SMHS Hospital — 4.2 km — ETA: 3 min 18 sec" 
+
+Camera slowly rises from behind ambulance to aerial overview revealing the entire green glowing corridor stretching through mountain landscape.
+
+Emotional, dramatic music feel. Cinematic quality. Photorealistic. Beautiful mountains.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT 6 — FULL SYSTEM OVERVIEW (Presentation Closing)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Epic wide aerial shot starting from space, zooming into Indian subcontinent, then into Jammu & Kashmir, then into specific mountain highway.
+
+As camera zooms in, digital network lines appear showing vehicle tracking across the entire J&K road network. Hundreds of glowing dots (vehicles) tracked in real-time. Red zones mark danger areas. Green zones mark safe areas. Hospital icons with connection lines appear.
+
+Camera finally settles on a beautiful mountain highway scene from aerial view. The roads glow with AI tracking data. Vehicles with color-coded labels move below.
+
+Statistics appear floating in 3D space:
+"100+ vehicles monitored"
+"8 danger zones tracked"  
+"34 min → 11 min response time"
+"Lives saved every day"
+
+Final frame: "HillSafe AI — World's First AI Mountain Road Safety System" in cinematic title card against Himalayan mountain backdrop.
+
+Epic, cinematic, emotional. Photorealistic mountain environment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW TO USE IN GEMINI:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to gemini.google.com → click "Videos"
+2. Select "Pro" model (better quality)
+3. Paste ONE prompt at a time
+4. Generate → download the video
+5. Import into your presentation / simulation
+
+ALSO TRY THESE TOOLS:
+• Kling AI (kling.kuaishou.com) — very realistic vehicles
+• RunwayML (runwayml.com) → Gen-3 Alpha — best quality
+• Pika Labs (pika.art) — good for J&K roads
+• Sora (OpenAI) — best but limited access
+
+FOR BEST RESULTS IN GEMINI:
+• Use Prompt 2 first (brake failure) — most dramatic
+• Then Prompt 5 (ambulance) — most emotional
+• Then Prompt 3 (helicopter) — most impressive
+• Combine videos in DaVinci Resolve (free) or CapCut
+================================================================

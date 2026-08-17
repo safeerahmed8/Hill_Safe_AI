@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HillSafe AI — Project Launcher</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04080e;--a1:#00c8ff;--a2:#00ff88;--a3:#7b61ff;
+  --dng:#ff2020;--wrn:#ff8c00;--saf:#00e676;--tx1:#b8d8f0;--tx2:#4e7899;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Rajdhani',sans-serif;color:var(--tx1)}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes barFill{from{width:0}to{width:100%}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px var(--a1)}50%{box-shadow:0 0 28px var(--a1)}}
+
+/* ── LOADING SCREEN ─────────────────────────────────────────── */
+#loadScreen{
+  position:fixed;inset:0;z-index:999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px
+}
+.ls-icon{font-size:64px;animation:bk 1.5s ease infinite}
+.ls-title{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;
+  color:var(--a1);letter-spacing:4px;text-align:center}
+.ls-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--tx2);
+  letter-spacing:3px;text-align:center}
+.ls-bar-wrap{width:360px;height:4px;background:rgba(0,200,255,.1);
+  border-radius:2px;overflow:hidden;margin-top:8px}
+.ls-bar{height:100%;background:linear-gradient(90deg,var(--a1),var(--a2));
+  border-radius:2px;width:0%;transition:width .3s ease}
+.ls-status{font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--a1);letter-spacing:2px;min-height:20px;text-align:center}
+.ls-checks{display:flex;flex-direction:column;gap:8px;margin-top:4px;min-width:280px}
+.lc{font-family:'Share Tech Mono',monospace;font-size:10px;
+  display:flex;align-items:center;gap:10px;color:var(--tx2);transition:color .3s}
+.lc.done{color:var(--saf)}.lc.active{color:var(--a1)}
+.lc-dot{width:8px;height:8px;border-radius:50%;background:var(--tx3);
+  flex-shrink:0;transition:all .3s}
+.lc.done .lc-dot{background:var(--saf)}.lc.active .lc-dot{background:var(--a1);animation:bk .6s infinite}
+
+/* ── MAIN APP ───────────────────────────────────────────────── */
+#app{display:none;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.topbar{height:52px;background:rgba(0,0,0,.96);border-bottom:1px solid rgba(0,200,255,.18);
+  display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:100;
+  backdrop-filter:blur(14px)}
+.tb-logo{display:flex;align-items:center;gap:8px}
+.tb-icon{width:30px;height:30px;background:linear-gradient(135deg,#00c8ff,#00ff88);
+  border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.tb-name{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;
+  color:var(--a1);letter-spacing:2px}
+.tb-ver{font-size:7px;color:var(--tx2);letter-spacing:2px}
+.tb-divider{width:1px;height:28px;background:rgba(0,200,255,.15)}
+
+/* Demo tab buttons */
+.demo-tabs{display:flex;gap:5px;flex:1;overflow-x:auto;padding:0 8px}
+.demo-tabs::-webkit-scrollbar{display:none}
+.dtab{padding:6px 14px;border-radius:5px;font-family:'Rajdhani',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;border:1px solid;
+  transition:all .2s;white-space:nowrap;flex-shrink:0}
+.dtab.active{background:rgba(0,200,255,.2);color:var(--a1);
+  border-color:rgba(0,200,255,.4);box-shadow:0 0 10px rgba(0,200,255,.2)}
+.dtab.inactive{background:rgba(0,200,255,.04);color:var(--tx2);
+  border-color:rgba(0,200,255,.1)}
+.dtab.inactive:hover{background:rgba(0,200,255,.1);color:var(--a1)}
+.dtab.red{background:rgba(255,32,32,.08);color:var(--dng);border-color:rgba(255,32,32,.2)}
+.dtab.red.active{background:rgba(255,32,32,.2);border-color:rgba(255,32,32,.4)}
+.dtab.grn{background:rgba(0,230,118,.06);color:var(--saf);border-color:rgba(0,230,118,.15)}
+.dtab.grn.active{background:rgba(0,230,118,.18);border-color:rgba(0,230,118,.35)}
+
+.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.live-indicator{display:flex;align-items:center;gap:5px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--saf);
+  padding:4px 10px;border:1px solid rgba(0,230,118,.25);border-radius:4px;
+  background:rgba(0,230,118,.06)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--saf);animation:bk .8s infinite}
+.tb-btn{padding:5px 12px;border-radius:4px;font-family:'Rajdhani',sans-serif;
+  font-size:10px;font-weight:700;cursor:pointer;border:1px solid;transition:all .2s}
+.tb-back{background:rgba(0,200,255,.06);color:var(--a1);border-color:rgba(0,200,255,.2)}
+.tb-back:hover{background:rgba(0,200,255,.16)}
+.tb-open{background:rgba(0,230,118,.1);color:var(--saf);border-color:rgba(0,230,118,.25)}
+.tb-open:hover{background:rgba(0,230,118,.22)}
+
+/* IFRAME CONTAINER */
+.iframe-wrap{flex:1;position:relative;overflow:hidden}
+.project-iframe{width:100%;height:100%;border:none;display:block;background:var(--bg)}
+
+/* TAB LOADING overlay */
+.tab-loading{position:absolute;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:50}
+.tl-spinner{width:40px;height:40px;border:3px solid rgba(0,200,255,.15);
+  border-top-color:var(--a1);border-radius:50%;animation:spin 1s linear infinite}
+.tl-text{font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--a1);letter-spacing:2px}
+.tl-sub{font-size:11px;color:var(--tx2)}
+
+/* STATUS BAR */
+.statusbar{height:28px;background:rgba(0,0,0,.9);border-top:1px solid rgba(0,200,255,.1);
+  display:flex;align-items:center;padding:0 14px;gap:16px;flex-shrink:0}
+.sb-item{font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:var(--tx2);display:flex;align-items:center;gap:5px;letter-spacing:1px}
+.sb-dot{width:5px;height:5px;border-radius:50%}
+</style>
+
+<style id="hs-conn-css">
+#hs-conn-banner{position:fixed;top:0;left:0;right:0;z-index:99999;
+  background:#3a0d0d;border-bottom:2px solid #ff4d4d;color:#ffdada;
+  font-family:'Courier New',monospace;font-size:13px;padding:12px 20px;
+  display:none;text-align:center;line-height:1.6}
+#hs-conn-banner b{color:#ff8080}
+#hs-conn-banner code{background:#1a0505;padding:2px 8px;border-radius:4px;color:#00e6ff}
+#hs-conn-banner button{margin-left:14px;background:#ff4d4d;color:#1a0505;border:none;
+  padding:5px 14px;border-radius:4px;font-weight:bold;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<div id="hs-conn-banner"></div>
+
+
+<!-- LOADING SCREEN -->
+<div id="loadScreen">
+  <div class="ls-icon">🏔</div>
+  <div class="ls-title">HILLSAFE AI</div>
+  <div class="ls-sub">INITIALIZING MOUNTAIN ROAD SAFETY SYSTEM</div>
+  <div class="ls-bar-wrap"><div class="ls-bar" id="lsBar"></div></div>
+  <div class="ls-status" id="lsStatus">Starting up...</div>
+  <div class="ls-checks">
+    <div class="lc" id="lc1"><div class="lc-dot"></div>Connecting to server (localhost:3000)</div>
+    <div class="lc" id="lc2"><div class="lc-dot"></div>Loading vehicle tracking system</div>
+    <div class="lc" id="lc3"><div class="lc-dot"></div>Initializing 8 danger zones</div>
+    <div class="lc" id="lc4"><div class="lc-dot"></div>Starting ML danger prediction</div>
+    <div class="lc" id="lc5"><div class="lc-dot"></div>HillSafe AI ready</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-logo">
+      <div class="tb-icon">🏔</div>
+      <div>
+        <div class="tb-name">HILLSAFE AI</div>
+        <div class="tb-ver">J&K MOUNTAIN ROAD SAFETY</div>
+      </div>
+    </div>
+    <div class="tb-divider"></div>
+
+    <!-- DEMO TABS -->
+    <div class="demo-tabs" id="demoTabs">
+      <button class="dtab active" onclick="switchTab(0,this)">🖥 Dashboard</button>
+      <button class="dtab inactive red" onclick="switchTab(1,this)">🎬 17-Phase Sim</button>
+      <button class="dtab inactive grn" onclick="switchTab(2,this)">📱 Driver App</button>
+      <button class="dtab inactive" onclick="switchTab(3,this)">📹 Real Road</button>
+      <button class="dtab inactive" onclick="switchTab(4,this)">📋 Portfolio</button>
+    </div>
+
+    <div class="tb-right">
+      <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+      <a id="openFullLink" class="tb-btn tb-open" href="#" target="_blank" rel="noopener"
+         style="text-decoration:none">↗ Open Full</a>
+      <button class="tb-btn tb-back" onclick="window.location.href='/'">← Website</button>
+    </div>
+  </div>
+
+  <!-- IFRAME -->
+  <div class="iframe-wrap" id="iframeWrap">
+    <div class="tab-loading" id="tabLoading">
+      <div class="tl-spinner"></div>
+      <div class="tl-text" id="tlText">LOADING...</div>
+      <div class="tl-sub" id="tlSub">Please wait</div>
+    </div>
+    <iframe id="mainFrame" class="project-iframe" src="" title="HillSafe AI Demo"
+      onload="iframeLoaded()"></iframe>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <div class="sb-item"><div class="sb-dot" style="background:var(--saf)"></div>SERVER: localhost:3000</div>
+    <div class="sb-item"><div class="sb-dot" id="sb-ml-dot" style="background:var(--tx2)"></div><span id="sb-ml-text">ML API: checking...</span></div>
+    <div class="sb-item"><div class="sb-dot" style="background:var(--saf)" id="sb-vehicles"></div>100 VEHICLES LIVE</div>
+    <div class="sb-item"><div class="sb-dot" style="background:var(--dng)"></div>8 DANGER ZONES ACTIVE</div>
+    <div class="sb-item"><div class="sb-dot" style="background:var(--wrn)"></div>AI MONITORING: ON</div>
+    <div class="sb-item" style="margin-left:auto">
+      <div class="sb-dot" style="background:var(--a1)"></div>
+      <span id="sbTime">--:--:--</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── PAGES CONFIG ──────────────────────────────────────────────
+const PAGES = [
+  { url:'/dashboard.html',               name:'Dashboard',       sub:'Live map · 100 vehicles · Real-time alerts' },
+  { url:'/simulation.html',          name:'17-Phase Sim',    sub:'Canvas 2D · Fog · Brake cascade · Corridor' },
+  { url:'/driver_app.html',          name:'Driver App',      sub:'PWA · GPS · SOS · Speed · AI score' },
+  { url:'/hillsafe_realroad.html',   name:'Real Road',       sub:'Real NH-44 footage · AI overlay' },
+  { url:'/hillsafe_portfolio.html',  name:'Portfolio',       sub:'Complete project summary page' },
+];
+
+let currentTab = 0;
+
+// ── LOADING SEQUENCE ──────────────────────────────────────────
+const checks = ['lc1','lc2','lc3','lc4','lc5'];
+const statuses = [
+  'Connecting to HillSafe AI server...',
+  'Loading 100 vehicle tracking system...',
+  'Activating 8 J&K danger zones...',
+  'Loading XGBoost ML model (87% accuracy)...',
+  'All systems online! 🚀'
+];
+const barPcts = [20, 40, 60, 80, 100];
+
+let step = 0;
+function nextStep() {
+  if (step >= checks.length) return;
+  // Mark previous as done
+  if (step > 0) {
+    const prev = document.getElementById(checks[step - 1]);
+    prev.classList.remove('active'); prev.classList.add('done');
+    prev.querySelector('.lc-dot').style.background = 'var(--saf)';
+  }
+  const el = document.getElementById(checks[step]);
+  el.classList.add('active');
+  document.getElementById('lsBar').style.width = barPcts[step] + '%';
+  document.getElementById('lsStatus').textContent = statuses[step];
+  step++;
+  if (step < checks.length) {
+    setTimeout(nextStep, 700 + Math.random() * 400);
+  } else {
+    setTimeout(finishLoad, 900);
+  }
+}
+
+function finishLoad() {
+  const last = document.getElementById(checks[checks.length - 1]);
+  last.classList.remove('active'); last.classList.add('done');
+  document.getElementById('lsBar').style.width = '100%';
+  document.getElementById('lsStatus').textContent = '✅ HillSafe AI Ready!';
+  setTimeout(() => {
+    document.getElementById('loadScreen').style.opacity = '0';
+    document.getElementById('loadScreen').style.transition = 'opacity .6s';
+    setTimeout(() => {
+      document.getElementById('loadScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      loadTab(0);
+    }, 600);
+  }, 800);
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchTab(idx, btn) {
+  currentTab = idx;
+  // Update buttons
+  document.querySelectorAll('.dtab').forEach((b, i) => {
+    b.classList.remove('active');
+    if (i !== idx) b.classList.add('inactive');
+  });
+  btn.classList.add('active'); btn.classList.remove('inactive');
+  loadTab(idx);
+}
+
+function loadTab(idx) {
+  const page = PAGES[idx];
+  const frame = document.getElementById('mainFrame');
+  const loading = document.getElementById('tabLoading');
+  document.getElementById('tlText').textContent = 'LOADING ' + page.name.toUpperCase() + '...';
+  document.getElementById('tlSub').textContent = page.sub;
+  loading.style.display = 'flex';
+  frame.style.opacity = '0';
+  frame.src = page.url;
+  // keep the "Open Full" link pointed at the current tab's real URL
+  // (a real <a href> is used instead of window.open so browsers never
+  // treat it as a blockable popup)
+  const openLink = document.getElementById('openFullLink');
+  if (openLink) openLink.href = page.url;
+}
+
+function iframeLoaded() {
+  const loading = document.getElementById('tabLoading');
+  const frame = document.getElementById('mainFrame');
+  loading.style.display = 'none';
+  frame.style.opacity = '1';
+  frame.style.transition = 'opacity .4s';
+}
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  document.getElementById('sbTime').textContent = now.toLocaleTimeString();
+}
+setInterval(tick, 1000); tick();
+
+// ── START LOADING ─────────────────────────────────────────────
+setTimeout(nextStep, 400);
+
+// ── REAL ML status check — dot turns green only if Python is ACTUALLY running ──
+async function checkMLStatus(){
+  const dot = document.getElementById('sb-ml-dot');
+  const txt = document.getElementById('sb-ml-text');
+  if(!dot || !txt) return;
+  try{
+    const d = await (await fetch('/api/ml-status')).json();
+    if(d.mlAvailable){
+      dot.style.background = 'var(--saf)';
+      txt.textContent = 'ML API: localhost:5000 ✓ CONNECTED';
+    } else {
+      dot.style.background = 'var(--wrn)';
+      txt.textContent = 'ML API: OFFLINE — run: python hillsafe_ml.py';
+    }
+  }catch(e){
+    dot.style.background = 'var(--dng)';
+    txt.textContent = 'ML API: unreachable';
+  }
+}
+checkMLStatus();
+setInterval(checkMLStatus, 8000);
+</script>
+
+<script>
+(function(){
+  var b = document.getElementById('hs-conn-banner');
+  function show(msg){ b.innerHTML = msg; b.style.display = 'block'; }
+  // Case 1 — opened directly as a file, not through the server
+  if (location.protocol === 'file:') {
+    show('&#9888; <b>Opened as a local file.</b> HillSafe AI needs the server running. ' +
+         'Open a terminal &rarr; <code>node server.js</code> &rarr; then browse to ' +
+         '<code>http://localhost:3000</code> instead of double-clicking this file.');
+    return;
+  }
+  // Case 2 — page loaded via http(s) but the Node server isn't reachable
+  fetch('/api/health', { cache: 'no-store' })
+    .then(function(r){ if(!r.ok) throw 0; })
+    .catch(function(){
+      show('&#9888; <b>Cannot reach the HillSafe AI server.</b> Make sure ' +
+           '<code>node server.js</code> is running in your terminal, then refresh this page. ' +
+           '<button onclick="location.reload()">Retry</button>');
+    });
+})();
+</script>
+</body>
+</html>

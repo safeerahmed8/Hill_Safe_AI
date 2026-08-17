@@ -1,742 +1,860 @@
+<!-- 
+  ═══════════════════════════════════════════════════════
+  HillSafe AI — Complete Presentation Website (Single File)
+  All code consolidated into index.html — no separate 
+  website file needed. This is the ONLY landing page.
+  
+  Security: XSS-safe meta tags, no inline event handler 
+  injection risk, sanitized static content only (no live 
+  socket data on this page — dashboard.html handles that).
+  ═══════════════════════════════════════════════════════
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HillSafe AI — 100 Vehicle Fleet</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="HillSafe AI — World's first AI-powered mountain road safety system for J&K India. Real-time vehicle monitoring, accident detection, Green Corridor ambulance routing.">
+<title>HillSafe AI — J&K Mountain Road Safety System</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   HILLSAFE AI — NEW WEBSITE v2.0
+   Completely Redesigned | All Buttons Work
+═══════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03060d;--bg2:#060c18;--bg3:#091426;
+  --a1:#00c8ff;--a2:#00ff88;--a3:#7b61ff;
+  --dng:#ff2020;--wrn:#ff8c00;--saf:#00e676;
+  --tx1:#c8dff0;--tx2:#4e7899;--tx3:#1e3050;
+}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{background:var(--bg);color:var(--tx1);font-family:'Rajdhani',sans-serif;
+  line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--a1);border-radius:2px}
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+/* ── ANIMATIONS ───────────────────────────────────── */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes glow{0%,100%{text-shadow:0 0 30px rgba(0,200,255,.5)}50%{text-shadow:0 0 70px rgba(0,200,255,1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes scanline{from{transform:translateY(-100%)}to{transform:translateY(100vh)}}
+@keyframes borderGlow{0%,100%{border-color:rgba(0,200,255,.2)}50%{border-color:rgba(0,200,255,.6)}}
+@keyframes countAnim{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 
-  <!-- MarkerCluster (for 100 marker performance) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+.anim{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.anim.show{opacity:1;transform:none}
+.anim-l{opacity:0;transform:translateX(-28px);transition:opacity .7s ease,transform .7s ease}
+.anim-l.show{opacity:1;transform:none}
+.anim-r{opacity:0;transform:translateX(28px);transition:opacity .7s ease,transform .7s ease}
+.anim-r.show{opacity:1;transform:none}
 
-  <!-- Socket.io -->
-  <script src="/socket.io/socket.io.js"></script>
+/* ── LAYOUT ─────────────────────────────────────────── */
+.sec{padding:90px 0;position:relative}
+.sec-dark{background:var(--bg2)}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.line{height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,255,.2),transparent)}
+.label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;
+  color:var(--a1);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.label::before,.label::after{content:'';height:1px;background:var(--a1);opacity:.4}
+.label::before{width:24px}.label::after{flex:0 0 8px}
+.title{font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,40px);font-weight:900;
+  color:#fff;letter-spacing:2px;margin-bottom:14px;line-height:1.1}
+.desc{font-size:15px;color:var(--tx2);max-width:560px;line-height:1.8;margin-bottom:48px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.glass{background:rgba(6,12,24,.85);border:1px solid rgba(0,200,255,.12);
+  border-radius:14px;backdrop-filter:blur(16px)}
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+/* ── BUTTONS ──────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;
+  border-radius:8px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+  letter-spacing:1.5px;cursor:pointer;border:1px solid;transition:all .2s;
+  text-decoration:none;white-space:nowrap}
+.btn:active{transform:scale(.96)!important}
+.btn-cta{background:linear-gradient(135deg,#00c8ff 0%,#0088bb 100%);color:#020810;
+  border-color:var(--a1);box-shadow:0 0 28px rgba(0,200,255,.3)}
+.btn-cta:hover{box-shadow:0 0 48px rgba(0,200,255,.55);transform:translateY(-2px)}
+.btn-ghost{background:rgba(0,200,255,.06);color:var(--a1);border-color:rgba(0,200,255,.25)}
+.btn-ghost:hover{background:rgba(0,200,255,.15);transform:translateY(-2px)}
+.btn-red{background:rgba(255,32,32,.1);color:var(--dng);border-color:rgba(255,32,32,.3)}
+.btn-red:hover{background:rgba(255,32,32,.2);transform:translateY(-2px)}
+.btn-grn{background:rgba(0,230,118,.1);color:var(--saf);border-color:rgba(0,230,118,.28)}
+.btn-grn:hover{background:rgba(0,230,118,.2);transform:translateY(-2px)}
+.btn-sm{padding:8px 18px;font-size:9px}
 
-    :root {
-      --bg:       #080d1a;
-      --panel:    #0b1220;
-      --card:     #0f1c35;
-      --border:   #1a2d50;
-      --blue:     #2e8fff;
-      --green:    #14d490;
-      --red:      #ff3d3d;
-      --orange:   #ff8c00;
-      --yellow:   #ffd600;
-      --text:     #cde0ff;
-      --muted:    #4a6080;
-    }
+/* ── SCANLINE ─────────────────────────────────────────── */
+#scanline{position:fixed;top:0;left:0;right:0;height:1.5px;
+  background:rgba(0,200,255,.07);pointer-events:none;z-index:9999;
+  animation:scanline 9s linear infinite}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ══════════ NAVBAR ══════════════════════════════════════ */
+#nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:64px;
+  background:rgba(3,6,13,.96);border-bottom:1px solid rgba(0,200,255,.1);
+  display:flex;align-items:center;padding:0 24px;backdrop-filter:blur(20px);
+  transition:box-shadow .3s}
+#nav.scrolled{box-shadow:0 2px 30px rgba(0,0,0,.5)}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo-box{width:36px;height:36px;background:linear-gradient(135deg,#00c8ff,#00ff88);
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;animation:float 4s ease infinite}
+.nav-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;
+  color:var(--a1);letter-spacing:2px}
+.nav-sub{font-size:7px;color:var(--tx2);letter-spacing:2px;display:block}
+.nav-links{display:flex;gap:2px;margin:0 auto;padding:0 20px}
+.nl{padding:7px 14px;border-radius:5px;font-family:'Rajdhani',sans-serif;
+  font-size:12px;font-weight:600;color:var(--tx2);text-decoration:none;
+  transition:all .2s;letter-spacing:.5px}
+.nl:hover,.nl.on{color:var(--a1);background:rgba(0,200,255,.08)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-live{display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border:1px solid rgba(0,230,118,.25);border-radius:5px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--saf);
+  background:rgba(0,230,118,.05);letter-spacing:1px}
+.nav-live-dot{width:6px;height:6px;border-radius:50%;background:var(--saf);animation:blink .8s infinite}
+.nav-run{background:var(--a1);color:#020810;border:none;border-radius:6px;
+  padding:8px 18px;font-family:'Orbitron',monospace;font-size:9px;font-weight:900;
+  letter-spacing:1.5px;cursor:pointer;transition:all .2s}
+.nav-run:hover{background:#33d6ff;box-shadow:0 0 22px rgba(0,200,255,.45)}
 
-    body {
-      font-family: 'Rajdhani', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-    }
+/* ══════════ HERO ════════════════════════════════════════ */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:64px;
+  position:relative;overflow:hidden}
+#particleCanvas{position:absolute;inset:0;z-index:0}
+.hero-inner{position:relative;z-index:1;width:100%;text-align:center;padding:40px 24px}
+.hero-kicker{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;
+  color:var(--a1);padding:6px 20px;border:1px solid rgba(0,200,255,.22);
+  border-radius:30px;background:rgba(0,200,255,.06);display:inline-block;
+  margin-bottom:32px;animation:fadeUp .8s ease .2s both}
+.hero-h1{font-family:'Orbitron',monospace;font-size:clamp(44px,8.5vw,90px);
+  font-weight:900;line-height:.95;letter-spacing:3px;margin-bottom:10px;
+  animation:fadeUp .8s ease .4s both,glow 4s ease infinite}
+.h1-grad{background:linear-gradient(135deg,#00c8ff 30%,#00ff88 70%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-tagline{font-family:'Orbitron',monospace;font-size:clamp(10px,1.5vw,13px);
+  color:var(--saf);letter-spacing:5px;margin-bottom:24px;
+  animation:fadeUp .8s ease .6s both}
+.hero-desc{font-size:clamp(13px,2vw,17px);color:var(--tx2);max-width:680px;
+  margin:0 auto 44px;line-height:1.8;animation:fadeUp .8s ease .8s both}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:72px;animation:fadeUp .8s ease 1s both}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  max-width:820px;margin:0 auto;animation:fadeUp .8s ease 1.2s both}
+.hs-card{background:rgba(6,12,24,.8);border:1px solid rgba(0,200,255,.14);
+  border-radius:12px;padding:22px 14px;text-align:center;backdrop-filter:blur(12px);
+  transition:all .3s;cursor:default;animation:borderGlow 3s ease infinite}
+.hs-card:hover{transform:translateY(-5px);border-color:rgba(0,200,255,.4);
+  box-shadow:0 16px 36px rgba(0,0,0,.35)}
+.hs-num{font-family:'Orbitron',monospace;font-size:clamp(26px,4vw,40px);
+  font-weight:900;line-height:1;margin-bottom:6px}
+.hs-lbl{font-size:9px;color:var(--tx2);letter-spacing:2px;text-transform:uppercase}
 
-    /* ---- HEADER ---- */
-    .header {
-      height: 48px;
-      background: linear-gradient(90deg, #040b1a 0%, #0a1628 60%, #040b1a 100%);
-      border-bottom: 1px solid var(--blue);
-      display: flex; align-items: center;
-      padding: 0 16px; gap: 16px;
-      box-shadow: 0 0 20px rgba(46,143,255,0.15);
-    }
-    .header-logo {
-      font-size: 18px; font-weight: 700; color: var(--blue);
-      letter-spacing: 2px; white-space: nowrap;
-    }
-    .header-logo span { color: var(--green); }
-    .header-subtitle { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
-    .header-spacer { flex: 1; }
-    .header-clock {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 13px; color: var(--green);
-      background: rgba(20,212,144,0.08);
-      padding: 4px 10px; border-radius: 4px;
-      border: 1px solid rgba(20,212,144,0.2);
-    }
-    .status-pill {
-      font-size: 11px; font-weight: 700;
-      padding: 4px 12px; border-radius: 20px;
-      background: rgba(20,212,144,0.15);
-      border: 1px solid var(--green);
-      color: var(--green); letter-spacing: 1px;
-    }
+/* ══════════ PROBLEM ═════════════════════════════════════ */
+.prob-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.prob-card{background:var(--bg3);border:1px solid rgba(255,32,32,.14);
+  border-radius:12px;padding:22px 18px;position:relative;overflow:hidden;transition:all .3s}
+.prob-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--dng)}
+.prob-card:hover{transform:translateY(-4px);border-color:rgba(255,32,32,.3)}
+.pc-num{font-family:'Orbitron',monospace;font-size:clamp(24px,3vw,34px);
+  font-weight:900;color:var(--dng);line-height:1;margin-bottom:6px}
+.pc-lbl{font-size:10px;color:var(--tx2);letter-spacing:1px;margin-bottom:4px}
+.pc-note{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--saf)}
+.prob-story h3{font-family:'Orbitron',monospace;font-size:20px;color:#fff;
+  letter-spacing:1.5px;margin-bottom:14px}
+.prob-story p{font-size:14px;color:var(--tx2);line-height:1.8;margin-bottom:12px}
+.prob-quote{border-left:3px solid var(--dng);padding:14px 18px;
+  background:rgba(255,32,32,.05);border-radius:0 8px 8px 0;
+  font-size:14px;color:var(--tx1);font-style:italic;line-height:1.7;margin-top:20px}
+.pq-author{font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--tx2);margin-top:8px;font-style:normal;letter-spacing:1px}
 
-    /* ---- LAYOUT ---- */
-    .main { display: flex; height: calc(100vh - 48px); }
-    #map { flex: 1; }
-    .panel {
-      width: 320px; background: var(--panel);
-      border-left: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .panel-scroll { flex: 1; overflow-y: auto; }
-    .panel-scroll::-webkit-scrollbar { width: 4px; }
-    .panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* ══════════ FEATURES ════════════════════════════════════ */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:18px}
+.feat{background:var(--bg2);border:1px solid rgba(0,200,255,.09);
+  border-radius:14px;padding:24px 20px;transition:all .3s;position:relative;overflow:hidden}
+.feat::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+  background:linear-gradient(135deg,rgba(0,200,255,.04),transparent)}
+.feat:hover{border-color:rgba(0,200,255,.3);transform:translateY(-5px);
+  box-shadow:0 18px 44px rgba(0,0,0,.32)}
+.feat:hover::before{opacity:1}
+.feat-top{display:flex;align-items:flex-start;gap:13px;margin-bottom:13px}
+.feat-icon{width:44px;height:44px;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.feat-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+  color:#fff;letter-spacing:1px;line-height:1.4;margin-bottom:5px}
+.feat-badge{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 8px;
+  border-radius:3px;letter-spacing:1px;display:inline-block}
+.fb-new{background:rgba(0,230,118,.1);color:var(--saf);border:1px solid rgba(0,230,118,.25)}
+.fb-hot{background:rgba(255,32,32,.1);color:var(--dng);border:1px solid rgba(255,32,32,.22)}
+.fb-hw{background:rgba(0,200,255,.08);color:var(--a1);border:1px solid rgba(0,200,255,.2)}
+.feat-desc{font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:12px}
+.feat-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 8px;
+  border-radius:3px;letter-spacing:.5px}
+.tjs{background:rgba(255,220,0,.08);color:#ffd700;border:1px solid rgba(255,220,0,.18)}
+.tpy{background:rgba(123,97,255,.1);color:#b0a0ff;border:1px solid rgba(123,97,255,.18)}
+.tcpp{background:rgba(0,230,118,.07);color:var(--saf);border:1px solid rgba(0,230,118,.16)}
+.tsql{background:rgba(0,200,255,.07);color:var(--a1);border:1px solid rgba(0,200,255,.16)}
+.thtml{background:rgba(255,140,0,.08);color:var(--wrn);border:1px solid rgba(255,140,0,.18)}
 
-    /* ---- FLEET STATUS BAR ---- */
-    .fleet-bar {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 1px; background: var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .fleet-stat {
-      background: var(--card); padding: 10px 6px;
-      text-align: center;
-    }
-    .fleet-stat .num {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 22px; font-weight: 700;
-    }
-    .fleet-stat .lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
-    .fleet-stat.total  .num { color: var(--blue); }
-    .fleet-stat.safe   .num { color: var(--green); }
-    .fleet-stat.warn   .num { color: var(--orange); }
-    .fleet-stat.crit   .num { color: var(--red); }
+/* ══════════ DEMOS ═══════════════════════════════════════ */
+.demo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.demo-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);border-radius:14px;
+  overflow:hidden;transition:all .3s;display:flex;flex-direction:column}
+.demo-card:hover{border-color:rgba(0,200,255,.32);transform:translateY(-5px);
+  box-shadow:0 20px 48px rgba(0,0,0,.38)}
+.dc-preview{height:155px;display:flex;align-items:center;justify-content:center;
+  position:relative;font-size:54px;overflow:hidden}
+.dc-preview::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 60%,rgba(6,12,24,.8))}
+.dc-badge{position:absolute;top:10px;left:10px;
+  font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 9px;
+  border-radius:3px;letter-spacing:1px}
+.dc-icon{animation:float 3s ease infinite;position:relative;z-index:1}
+.dc-body{padding:20px;flex:1;display:flex;flex-direction:column}
+.dc-title{font-family:'Orbitron',monospace;font-size:11px;color:#fff;
+  letter-spacing:1.5px;margin-bottom:7px}
+.dc-desc{font-size:12px;color:var(--tx2);line-height:1.65;flex:1;margin-bottom:16px}
+.dc-link{display:inline-flex;align-items:center;gap:6px;font-family:'Orbitron',monospace;
+  font-size:9px;color:var(--a1);letter-spacing:1px;text-decoration:none;
+  padding:8px 16px;border:1px solid rgba(0,200,255,.22);border-radius:6px;
+  background:rgba(0,200,255,.05);transition:all .2s}
+.dc-link:hover{background:rgba(0,200,255,.15);border-color:var(--a1);gap:10px}
 
-    /* ---- STATUS SUMMARY ---- */
-    .status-row {
-      display: flex; gap: 6px;
-      padding: 10px 12px; border-bottom: 1px solid var(--border);
-    }
-    .status-chip {
-      flex: 1; padding: 6px 4px; border-radius: 6px;
-      text-align: center; font-size: 10px; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-    }
-    .chip-normal   { background: rgba(20,212,144,0.1);  border: 1px solid rgba(20,212,144,0.3);  color: var(--green); }
-    .chip-danger   { background: rgba(255,140,0,0.1);   border: 1px solid rgba(255,140,0,0.3);   color: var(--orange); }
-    .chip-accident { background: rgba(255,61,61,0.1);   border: 1px solid rgba(255,61,61,0.3);   color: var(--red); animation: pulseRed 1s infinite; }
-    .chip-challans { background: rgba(255,214,0,0.1);   border: 1px solid rgba(255,214,0,0.3);   color: var(--yellow); }
-    @keyframes pulseRed { 0%,100%{opacity:1} 50%{opacity:0.5} }
-    .status-chip .big { font-size: 18px; font-family: 'Share Tech Mono', monospace; display: block; }
+/* ══════════ TECH STACK ══════════════════════════════════ */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.tech-card{background:var(--bg2);border:1px solid rgba(0,200,255,.09);
+  border-radius:12px;padding:18px 16px;display:flex;align-items:center;
+  gap:13px;transition:all .25s;cursor:default}
+.tech-card:hover{border-color:rgba(0,200,255,.28);background:rgba(0,200,255,.04);
+  transform:translateY(-3px)}
+.tc-icon{font-size:28px;flex-shrink:0}
+.tc-name{font-family:'Orbitron',monospace;font-size:10px;color:#fff;
+  letter-spacing:1px;margin-bottom:3px}
+.tc-role{font-size:10px;color:var(--tx2);line-height:1.4}
 
-    /* ---- SECTION ---- */
-    .section { border-bottom: 1px solid var(--border); }
-    .section-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px 8px;
-    }
-    .section-head h3 {
-      font-size: 10px; font-weight: 700; color: var(--blue);
-      text-transform: uppercase; letter-spacing: 2px;
-    }
-    .section-body { padding: 0 10px 10px; }
+/* ══════════ METRICS ═════════════════════════════════════ */
+.met-big{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:40px}
+.met-card{background:var(--bg2);border-radius:14px;padding:28px 22px;text-align:center;
+  border:1px solid rgba(0,200,255,.1);transition:all .3s}
+.met-card:hover{transform:translateY(-4px);border-color:rgba(0,200,255,.28)}
+.met-n{font-family:'Orbitron',monospace;font-size:clamp(30px,5vw,52px);
+  font-weight:900;line-height:1;margin-bottom:7px}
+.met-l{font-size:10px;color:var(--tx2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.met-bar-bg{height:4px;background:rgba(0,200,255,.1);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.met-bar{height:100%;border-radius:2px;transition:width 1.5s ease}
+.met-note{font-size:11px;color:var(--tx2)}
+.met-note b{color:var(--saf)}
+.compare-table{width:100%;border-collapse:collapse}
+.compare-table th{font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--tx2);padding:13px 16px;text-align:left;
+  background:rgba(0,200,255,.04);border-bottom:1px solid rgba(0,200,255,.1)}
+.compare-table td{padding:12px 16px;font-size:12px;border-bottom:1px solid rgba(0,200,255,.06)}
+.compare-table tr:hover td{background:rgba(0,200,255,.03)}
+.compare-table tr:last-child td{border-bottom:none}
+.ct-f{font-family:'Share Tech Mono',monospace;color:var(--a1);font-size:11px}
+.ct-b{color:var(--tx2)}.ct-a{color:var(--saf);font-weight:700}
+.ct-i{font-size:10px;color:var(--saf)}
 
-    /* ---- SEARCH ---- */
-    .search-wrap { padding: 8px 10px; position: relative; }
-    .search-input {
-      width: 100%; background: var(--card);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 7px 10px 7px 32px;
-      color: var(--text); font-family: 'Rajdhani', sans-serif;
-      font-size: 13px; outline: none;
-    }
-    .search-input:focus { border-color: var(--blue); }
-    .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+/* ══════════ TEAM ════════════════════════════════════════ */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+.team-card{background:var(--bg2);border:1px solid rgba(0,200,255,.1);
+  border-radius:16px;padding:32px;text-align:center;transition:all .3s}
+.team-card:hover{border-color:rgba(0,200,255,.28);transform:translateY(-5px);
+  box-shadow:0 22px 50px rgba(0,0,0,.38)}
+.team-av{width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  margin:0 auto 18px;box-shadow:0 0 28px rgba(0,200,255,.28);
+  animation:float 4s ease infinite}
+.team-name{font-family:'Orbitron',monospace;font-size:14px;color:#fff;
+  letter-spacing:1.5px;margin-bottom:5px}
+.team-role{font-size:12px;color:var(--a1);margin-bottom:4px}
+.team-inst{font-size:11px;color:var(--tx2);margin-bottom:16px}
+.team-skills{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:12px}
+.t-sk{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 8px;
+  border-radius:3px;background:rgba(0,200,255,.06);color:var(--tx2);
+  border:1px solid rgba(0,200,255,.12)}
+.team-gh{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx2);letter-spacing:.5px}
 
-    /* ---- VEHICLE CARDS (compact) ---- */
-    .v-card {
-      background: var(--card);
-      border-left: 3px solid var(--green);
-      border-radius: 6px; padding: 7px 9px;
-      margin-bottom: 5px; cursor: pointer;
-      transition: background 0.2s;
-      display: grid; grid-template-columns: 1fr auto;
-      gap: 2px 8px; align-items: center;
-    }
-    .v-card:hover { background: #142240; }
-    .v-card.danger   { border-left-color: var(--orange); background: rgba(255,140,0,0.07); }
-    .v-card.accident { border-left-color: var(--red); background: rgba(255,61,61,0.1); animation: pulseRed 0.8s infinite; }
-    .v-plate { font-size: 12px; font-weight: 700; color: white; font-family: 'Share Tech Mono', monospace; }
-    .v-name  { font-size: 10px; color: var(--muted); }
-    .v-speed {
-      font-size: 11px; font-weight: 700; font-family: 'Share Tech Mono', monospace;
-      color: var(--green); text-align: right;
-    }
-    .v-speed.fast { color: var(--red); }
-    .v-speed.mid  { color: var(--orange); }
-    .v-zone { font-size: 9px; color: var(--orange); grid-column: 1/-1; }
-    .v-type-badge {
-      font-size: 9px; padding: 1px 5px; border-radius: 3px;
-      background: rgba(46,143,255,0.15); color: var(--blue);
-      border: 1px solid rgba(46,143,255,0.2);
-    }
+/* ══════════ LAUNCH SECTION ══════════════════════════════ */
+#launch{padding:80px 0;background:var(--bg2)}
+.launch-inner{text-align:center;max-width:800px;margin:0 auto}
+.launch-title{font-family:'Orbitron',monospace;font-size:clamp(20px,3.5vw,36px);
+  font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:14px}
+.launch-desc{font-size:15px;color:var(--tx2);line-height:1.75;margin-bottom:40px}
+.launch-main{margin-bottom:28px}
+.launch-sub{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:36px}
+.launch-note{font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--tx2);padding:12px 20px;border:1px solid rgba(0,200,255,.12);
+  border-radius:8px;display:inline-block;letter-spacing:1px}
+.launch-note span{color:var(--saf)}
 
-    /* ---- ALERTS ---- */
-    .alert-item {
-      border-radius: 6px; padding: 6px 9px;
-      margin-bottom: 5px; font-size: 11px;
-      border-left: 3px solid;
-    }
-    .alert-item.danger   { background: rgba(255,61,61,0.08);  border-color: var(--red);    color: #ff8080; }
-    .alert-item.warning  { background: rgba(255,140,0,0.08);  border-color: var(--orange); color: var(--orange); }
-    .alert-item.info     { background: rgba(46,143,255,0.08); border-color: var(--blue);   color: var(--blue); }
-    .alert-item.challan  { background: rgba(255,214,0,0.07);  border-color: var(--yellow); color: var(--yellow); }
-    .alert-time { font-size: 9px; opacity: 0.6; margin-bottom: 1px; font-family: 'Share Tech Mono', monospace; }
+/* ══════════ FOOTER ══════════════════════════════════════ */
+footer{background:var(--bg2);border-top:1px solid rgba(0,200,255,.08);padding:48px 0 24px}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.fg-brand p{font-size:12px;color:var(--tx2);line-height:1.75;max-width:240px;margin-top:12px}
+.fg-links h4{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx2);
+  letter-spacing:3px;margin-bottom:16px;text-transform:uppercase}
+.fg-links a{display:block;font-size:12px;color:var(--tx2);margin-bottom:9px;
+  text-decoration:none;transition:color .2s}
+.fg-links a:hover{color:var(--a1)}
+.footer-bottom{border-top:1px solid rgba(0,200,255,.07);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.fb-copy{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx3);letter-spacing:1.5px}
+.fb-tech{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx3);letter-spacing:.8px}
 
-    /* ---- DEMO CONTROLS ---- */
-    .controls { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
-    .controls-row { display: flex; gap: 5px; }
-    .btn {
-      flex: 1; padding: 8px 6px; border: none; border-radius: 6px;
-      font-family: 'Rajdhani', sans-serif; font-size: 11px;
-      font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
-      transition: opacity 0.2s;
-    }
-    .btn:hover { opacity: 0.85; }
-    .btn-red    { background: linear-gradient(135deg, #c0392b, #ff3d3d); color: white; }
-    .btn-green  { background: linear-gradient(135deg, #0d8a5f, #14d490); color: #001a0d; }
-    .btn-blue   { background: linear-gradient(135deg, #1a5aaa, #2e8fff); color: white; }
-    .btn-yellow { background: linear-gradient(135deg, #a07800, #ffd600); color: #1a1000; }
-    .btn-full   { width: 100%; flex: none; }
+@media(max-width:900px){
+  .grid-2,.footer-grid,.met-big{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .prob-cards{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .hero-stats,.prob-cards{grid-template-columns:1fr 1fr}
+  .met-big{grid-template-columns:1fr}
+}
+</style>
 
-    /* ---- DEBUG BOX ---- */
-    .debug-box {
-      margin: 0 10px 10px;
-      background: rgba(46,143,255,0.05);
-      border: 1px solid rgba(46,143,255,0.2);
-      border-radius: 6px; padding: 8px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px; color: rgba(46,143,255,0.7);
-      max-height: 100px; overflow-y: auto;
-    }
-
-    /* ---- ZONE CARDS ---- */
-    .z-card {
-      background: rgba(255,61,61,0.07);
-      border: 1px solid rgba(255,61,61,0.2);
-      border-radius: 6px; padding: 7px 10px; margin-bottom: 5px;
-    }
-    .z-name { font-size: 12px; font-weight: 700; color: white; }
-    .z-info { font-size: 10px; color: var(--red); margin-top: 1px; }
-
-    /* J&K badge */
-    .jk-label {
-      background: rgba(46,143,255,0.85); color: white;
-      padding: 3px 8px; border-radius: 4px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 11px; font-weight: 700;
-      border: 1px solid var(--blue); white-space: nowrap;
-    }
-
-    .show-more {
-      display: block; width: 100%; margin-top: 5px;
-      background: none; border: 1px dashed var(--border);
-      color: var(--muted); border-radius: 6px;
-      padding: 6px; font-size: 11px; cursor: pointer;
-      font-family: 'Rajdhani', sans-serif;
-    }
-    .show-more:hover { border-color: var(--blue); color: var(--blue); }
-  </style>
+<style id="hs-conn-css">
+#hs-conn-banner{position:fixed;top:0;left:0;right:0;z-index:99999;
+  background:#3a0d0d;border-bottom:2px solid #ff4d4d;color:#ffdada;
+  font-family:'Courier New',monospace;font-size:13px;padding:12px 20px;
+  display:none;text-align:center;line-height:1.6}
+#hs-conn-banner b{color:#ff8080}
+#hs-conn-banner code{background:#1a0505;padding:2px 8px;border-radius:4px;color:#00e6ff}
+#hs-conn-banner button{margin-left:14px;background:#ff4d4d;color:#1a0505;border:none;
+  padding:5px 14px;border-radius:4px;font-weight:bold;cursor:pointer;font-family:inherit}
+</style>
 </head>
 <body>
+<div id="hs-conn-banner"></div>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-logo">HILL<span>SAFE</span> AI</div>
-  <div class="header-subtitle">SMART MOUNTAIN ROAD SAFETY — JAMMU & KASHMIR</div>
-  <div class="header-spacer"></div>
-  <div class="header-clock" id="clock">--:--:--</div>
-  <div class="status-pill">🟢 100 VEHICLES LIVE</div>
-</div>
 
-<div class="main">
-  <div id="map"></div>
+<div id="scanline"></div>
+<canvas id="particleCanvas" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
 
-  <div class="panel">
-
-    <!-- FLEET STATUS BAR -->
-    <div class="fleet-bar">
-      <div class="fleet-stat total"><div class="num" id="stat-total">100</div><div class="lbl">Fleet</div></div>
-      <div class="fleet-stat safe"> <div class="num" id="stat-normal">100</div><div class="lbl">Safe</div></div>
-      <div class="fleet-stat warn"> <div class="num" id="stat-danger">0</div><div class="lbl">Danger</div></div>
-      <div class="fleet-stat crit"> <div class="num" id="stat-accident">0</div><div class="lbl">Accident</div></div>
+<!-- ══ NAVBAR ═════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-brand">
+    <div class="nav-logo-box">🏔</div>
+    <div>
+      <span class="nav-name">HILLSAFE AI</span>
+      <span class="nav-sub">MOUNTAIN ROAD SAFETY · J&K INDIA</span>
     </div>
+  </div>
+  <div class="nav-links">
+    <a class="nl" href="#problem">Problem</a>
+    <a class="nl" href="#features">Features</a>
+    <a class="nl" href="#demos">Demos</a>
+    <a class="nl" href="#tech">Tech</a>
+    <a class="nl" href="#metrics">Impact</a>
+    <a class="nl" href="#comparison">Global</a>
+    <a class="nl" href="#team">Team</a>
+    <a class="nl" href="#launch">Run</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-live"><div class="nav-live-dot"></div>LIVE</div>
+    <a class="nav-run" href="/launcher.html" target="_blank" rel="noopener"
+       style="text-decoration:none;display:inline-flex;align-items:center">▶ LAUNCH PROJECT</a>
+  </div>
+</nav>
 
-    <!-- STATUS CHIPS -->
-    <div class="status-row">
-      <div class="status-chip chip-normal">  <span class="big" id="chip-normal">100</span>Normal</div>
-      <div class="status-chip chip-danger">  <span class="big" id="chip-danger">0</span>Danger</div>
-      <div class="status-chip chip-accident"><span class="big" id="chip-accident">0</span>Accident</div>
-      <div class="status-chip chip-challans"><span class="big" id="chip-challans">0</span>Challans</div>
+<!-- ══ HERO ══════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-kicker">🏔 J&K MOUNTAIN ROAD SAFETY · AI-POWERED · FULL STACK</div>
+    <h1 class="hero-h1"><span class="h1-grad">HillSafe</span> AI</h1>
+    <p class="hero-tagline">WORLD'S FIRST AI MOUNTAIN ROAD SAFETY SYSTEM</p>
+    <p class="hero-desc">A full-stack AI platform monitoring 100+ vehicles across 8 J&K mountain danger zones in real time — detecting accidents, clearing ambulance routes, and cutting emergency response from 34 minutes to 11 minutes.</p>
+    <div class="hero-btns">
+      <a class="btn btn-cta" href="/launcher.html" target="_blank">▶ Run the Project</a>
+      <a class="btn btn-ghost" href="#demos">🎬 View Demos</a>
+      <a class="btn btn-ghost" href="#features">🚀 All Features</a>
+      <a class="btn btn-red" href="#problem">📋 The Problem</a>
     </div>
+    <div class="hero-stats">
+      <div class="hs-card"><div class="hs-num" style="color:var(--a1)" id="cnt1">0</div><div class="hs-lbl">Live Vehicles</div></div>
+      <div class="hs-card"><div class="hs-num" style="color:var(--saf)" id="cnt2">0</div><div class="hs-lbl">Min Response</div></div>
+      <div class="hs-card"><div class="hs-num" style="color:var(--wrn)" id="cnt3">0%</div><div class="hs-lbl">ML Accuracy</div></div>
+      <div class="hs-card"><div class="hs-num" style="color:var(--dng)" id="cnt4">0</div><div class="hs-lbl">Danger Zones</div></div>
+    </div>
+  </div>
+</section>
 
-    <div class="panel-scroll">
+<div class="line"></div>
 
-      <!-- DEBUG -->
-      <div class="debug-box" id="debug">⏳ Starting HillSafe AI v5.0...</div>
+<!-- ══ PROBLEM ═══════════════════════════════════════════ -->
+<section id="problem" class="sec sec-dark">
+  <div class="wrap">
+    <div class="grid-2">
+      <div class="prob-cards anim-l">
+        <div class="prob-card"><div class="pc-num">34 min</div><div class="pc-lbl">National avg response</div><div class="pc-note">↓ HillSafe: 11 min</div></div>
+        <div class="prob-card"><div class="pc-num">4,670</div><div class="pc-lbl">J&K accidents / year</div><div class="pc-note">Source: NCRB 2023</div></div>
+        <div class="prob-card"><div class="pc-num">0%</div><div class="pc-lbl">Signal at Banihal Pass</div><div class="pc-note">Zero connectivity zone</div></div>
+        <div class="prob-card"><div class="pc-num">2,832m</div><div class="pc-lbl">Banihal Pass altitude</div><div class="pc-note">India's most dangerous</div></div>
+      </div>
+      <div class="prob-story anim-r">
+        <div class="label">The Problem</div>
+        <h2 class="title">J&K Mountain Roads Kill Silently</h2>
+        <p style="font-size:14px;color:var(--tx2);line-height:1.8;margin-bottom:12px">Banihal Pass, Zoji La, Jawahar Tunnel — sharp blind curves, dense fog, black ice, steep descents, and zero signal. When accidents happen at 2,800m altitude, help arrives 34 minutes later — often too late.</p>
+        <p style="font-size:14px;color:var(--tx2);line-height:1.8">Existing systems fail completely in mountain terrain. No GPS, no connectivity, no automated response. Ambulances get stuck in traffic. Hospitals receive no advance notice.</p>
+        <div class="prob-quote">"I witnessed accidents on these roads where help arrived too late. People died waiting. That moment made me build HillSafe AI."<div class="pq-author">— SAFEER AHMED · Lead Developer</div></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-      <!-- DEMO CONTROLS -->
-      <div class="section">
-        <div class="section-head"><h3>🎮 Demo Controls</h3></div>
-        <div class="controls">
-          <div class="controls-row">
-            <button class="btn btn-red"   onclick="simulateAccident(Math.floor(Math.random()*100)+1)">🚨 Random Accident</button>
-            <button class="btn btn-red"   onclick="massAccident()">💥 Mass Accident (5)</button>
-          </div>
-          <div class="controls-row">
-            <button class="btn btn-green" onclick="resetAll()">✅ Reset All Vehicles</button>
-            <button class="btn btn-blue"  onclick="testVoice()">🔊 Voice Test</button>
-          </div>
-          <button class="btn btn-yellow btn-full" onclick="viewChallans()">💸 View Auto Challans</button>
-        </div>
+<div class="line"></div>
+
+<!-- ══ FEATURES ══════════════════════════════════════════ -->
+<section id="features" class="sec">
+  <div class="wrap">
+    <div class="label">What We Built</div>
+    <h2 class="title">Complete Feature Set</h2>
+    <p class="desc">18+ features across 4 languages — from database to hardware firmware.</p>
+    <div class="feat-grid">
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(0,230,118,.08)">🚑</div>
+          <div><div class="feat-name">GREEN CORRIDOR SYSTEM</div><span class="feat-badge fb-new">WORLD FIRST</span></div></div>
+        <div class="feat-desc">Road cleared BEFORE ambulance departs. Haversine finds vehicles in route. Type-specific pullover instructions. Re-alerts violators every 20s. Cuts 34→11 min response.</div>
+        <div class="feat-tags"><span class="tag tjs">Node.js</span><span class="tag tjs">Socket.io</span></div>
       </div>
 
-      <!-- LIVE ALERTS -->
-      <div class="section">
-        <div class="section-head">
-          <h3>🚨 Live Alerts</h3>
-          <span style="font-size:10px;color:var(--muted)" id="alert-count">0</span>
-        </div>
-        <div class="section-body">
-          <div id="alerts-list">
-            <div class="alert-item info"><div class="alert-time">SYSTEM</div>Monitoring 100 vehicles across J&K...</div>
-          </div>
-        </div>
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(255,32,32,.08)">🚨</div>
+          <div><div class="feat-name">BRAKE FAILURE CASCADE</div><span class="feat-badge fb-hot">&lt;0.5 SECONDS</span></div></div>
+        <div class="feat-desc">Brake failure → instant cascade to ALL vehicles within 500m. Traffic control notified simultaneously. Nearby vehicles pull aside. Ambulance route auto-cleared.</div>
+        <div class="feat-tags"><span class="tag tjs">Socket.io</span><span class="tag tjs">Node.js</span></div>
       </div>
 
-      <!-- VEHICLE LIST WITH SEARCH -->
-      <div class="section">
-        <div class="section-head"><h3>🚗 Live Fleet — 100 Vehicles</h3></div>
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input class="search-input" id="search" type="text" placeholder="Search plate or driver..." oninput="filterVehicles()">
-        </div>
-        <div class="section-body">
-          <div id="vehicles-list"><div style="color:var(--muted);font-size:12px;padding:10px;">⏳ Loading 100 vehicles...</div></div>
-        </div>
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(123,97,255,.1)">🤖</div>
+          <div><div class="feat-name">XGBOOST ML PREDICTION</div><span class="feat-badge" style="background:rgba(123,97,255,.1);color:#b0a0ff;border:1px solid rgba(123,97,255,.2)">87% ACCURACY</span></div></div>
+        <div class="feat-desc">25 features: speed, altitude, weather, fatigue, zone proximity. Predicts crash 0–1 BEFORE it happens. FastAPI port 5000. NCRB + iRAD + IMD real data pipeline.</div>
+        <div class="feat-tags"><span class="tag tpy">Python</span><span class="tag tpy">XGBoost</span><span class="tag tpy">FastAPI</span></div>
       </div>
 
-      <!-- DANGER ZONES -->
-      <div class="section">
-        <div class="section-head"><h3>🔴 Danger Zones</h3></div>
-        <div class="section-body"><div id="zones-list"><div style="color:var(--muted);font-size:12px;">⏳ Loading...</div></div></div>
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(0,200,255,.08)">🚗</div>
+          <div><div class="feat-name">100 LIVE VEHICLES</div></div></div>
+        <div class="feat-desc">Real J&K plates, driver names, blood groups. GPS every 2s. 5 alert types: Brake Failure, Overspeed, Mechanical Fault, Driver Fatigue, Tyre Burst. Auto challan ₹500–₹3000.</div>
+        <div class="feat-tags"><span class="tag tjs">Node.js</span><span class="tag tsql">MySQL</span></div>
+      </div>
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(255,140,0,.08)">🌦️</div>
+          <div><div class="feat-name">REAL WEATHER API</div></div></div>
+        <div class="feat-desc">Open-Meteo API — free, no key needed. All 8 zones every 15 min. Danger multipliers: Fog ×2.0, Snow ×2.8, Storm ×2.5. Auto-adjusts AI scores.</div>
+        <div class="feat-tags"><span class="tag tjs">Open-Meteo</span><span class="tag tjs">Node.js</span></div>
+      </div>
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(0,200,255,.08)">⚙️</div>
+          <div><div class="feat-name">REMOTE ECU SPEED LOCK</div><span class="feat-badge fb-hw">HARDWARE</span></div></div>
+        <div class="feat-desc">Server sends OBD-II command to physically lock speed. Gradual 8 km/h reduction per tick. Realistic engine braking. Hardware: ESP32 + ELM327. Cost: ₹1,400.</div>
+        <div class="feat-tags"><span class="tag tcpp">C++ ESP32</span><span class="tag tjs">Node.js</span></div>
+      </div>
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(255,140,0,.08)">🔊</div>
+          <div><div class="feat-name">HINDI VOICE ALERTS</div></div></div>
+        <div class="feat-desc">19 alert types with clear English voice narration. Web Speech API, fires on every dashboard event.</div>
+        <div class="feat-tags"><span class="tag thtml">Web Speech API</span><span class="tag thtml">Hindi</span></div>
+      </div>
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(168,85,247,.1)">📱</div>
+          <div><div class="feat-name">ANDROID PWA DRIVER APP</div><span class="feat-badge" style="background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.2)">INSTALLABLE</span></div></div>
+        <div class="feat-desc">Install on Android via Chrome. Live speed, AI score, GPS, SOS button, danger zones. Socket.io connected. Vibration on critical alerts. No app store needed.</div>
+        <div class="feat-tags"><span class="tag thtml">PWA</span><span class="tag tjs">Socket.io</span></div>
+      </div>
+
+      <div class="feat anim">
+        <div class="feat-top"><div class="feat-icon" style="background:rgba(0,200,255,.08)">📡</div>
+          <div><div class="feat-name">TWILIO SMS + PDF REPORTS</div></div></div>
+        <div class="feat-desc">Accident → SMS to family with GPS + blood type. Challan SMS to driver. Auto-generate monthly PDF reports for J&K Traffic Police with zone stats and recommendations.</div>
+        <div class="feat-tags"><span class="tag tjs">Twilio</span><span class="tag tjs">PDFKit</span></div>
       </div>
 
     </div>
   </div>
-</div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ DEMOS ══════════════════════════════════════════════ -->
+<section id="demos" class="sec sec-dark">
+  <div class="wrap">
+    <div class="label">Live Demonstrations</div>
+    <h2 class="title">See It In Action</h2>
+    <p class="desc">6 interactive demos — all running on your machine at localhost:3000</p>
+    <div class="demo-grid">
+
+      <div class="demo-card anim">
+        <div class="dc-preview" style="background:linear-gradient(135deg,#060d18,#091422)">
+          <div class="dc-icon">🗺️</div>
+          <span class="dc-badge" style="background:rgba(0,200,255,.15);color:var(--a1);border:1px solid rgba(0,200,255,.2)">● LIVE MAP</span>
+        </div>
+        <div class="dc-body">
+          <div class="dc-title">LIVE DASHBOARD</div>
+          <div class="dc-desc">Leaflet.js map with 100 moving vehicles, 8 danger zones, ambulance routes, heatmap, English voice alerts, weather strip.</div>
+          <a class="dc-link" href="/dashboard.html" target="_blank">🗺️ Open Dashboard →</a>
+        </div>
+      </div>
+
+      <div class="demo-card anim">
+        <div class="dc-preview" style="background:linear-gradient(135deg,#100808,#1a0a0a)">
+          <div class="dc-icon">🎬</div>
+          <span class="dc-badge" style="background:rgba(255,32,32,.15);color:var(--dng);border:1px solid rgba(255,32,32,.2)">17 PHASES</span>
+        </div>
+        <div class="dc-body">
+          <div class="dc-title">17-PHASE 2D SIMULATION</div>
+          <div class="dc-desc">Auto-playing Canvas 2D demo — fog, AI prediction, ECU lock, brake cascade, Green Corridor, ambulance racing, stats.</div>
+          <a class="dc-link" href="/simulation.html" target="_blank">🎬 Open Simulation →</a>
+        </div>
+      </div>
+
+      <div class="demo-card anim">
+        <div class="dc-preview" style="background:linear-gradient(135deg,#08040e,#120614)">
+          <div class="dc-icon">📱</div>
+          <span class="dc-badge" style="background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.2)">ANDROID PWA</span>
+        </div>
+        <div class="dc-body">
+          <div class="dc-title">DRIVER MOBILE APP</div>
+          <div class="dc-desc">Installable Android PWA. Speed, GPS, AI score, SOS button, zones. Chrome → 3 dots → Add to Home Screen to install.</div>
+          <a class="dc-link" href="/driver_app.html" target="_blank">📱 Open Driver App →</a>
+        </div>
+      </div>
+
+      <div class="demo-card anim">
+        <div class="dc-preview" style="background:linear-gradient(135deg,#060d0a,#0a1810)">
+          <div class="dc-icon">📹</div>
+          <span class="dc-badge" style="background:rgba(0,230,118,.1);color:var(--saf);border:1px solid rgba(0,230,118,.18)">REAL FOOTAGE</span>
+        </div>
+        <div class="dc-body">
+          <div class="dc-title">REAL ROAD AI OVERLAY</div>
+          <div class="dc-desc">Real NH-44 Banihal Pass YouTube footage as background. HillSafe AI vehicle dots overlaid on actual road.</div>
+          <a class="dc-link" href="/hillsafe_realroad.html" target="_blank">📹 Open Real Road →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ TECH STACK ══════════════════════════════════════════ -->
+<section id="tech" class="sec">
+  <div class="wrap">
+    <div class="label">Technology</div>
+    <h2 class="title">Full Stack Architecture</h2>
+    <p class="desc">4 languages · 15+ libraries · Real hardware · Runs locally</p>
+    <div class="tech-grid">
+      <div class="tech-card anim"><div class="tc-icon">🟢</div><div><div class="tc-name">NODE.JS + EXPRESS</div><div class="tc-role">Backend · REST API · Simulation engine</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">⚡</div><div><div class="tc-name">SOCKET.IO</div><div class="tc-role">Real-time vehicle events</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🐍</div><div><div class="tc-name">PYTHON + XGBOOST</div><div class="tc-role">ML model · 87% accuracy · 25 features</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🚀</div><div><div class="tc-name">FASTAPI</div><div class="tc-role">ML API server on port 5000</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🗄️</div><div><div class="tc-name">MYSQL + XAMPP</div><div class="tc-role">8 tables · Full relational schema</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🗺️</div><div><div class="tc-name">LEAFLET.JS</div><div class="tc-role">Live J&K map · Heatmap · Routes</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🌐</div><div><div class="tc-name">THREE.JS r128</div><div class="tc-role">4D HD 3D mountain simulation</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">☁️</div><div><div class="tc-name">OPEN-METEO</div><div class="tc-role">Free real weather API · 8 zones</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">📱</div><div><div class="tc-name">TWILIO + PDFKIT</div><div class="tc-role">SMS alerts · Govt PDF reports</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🔧</div><div><div class="tc-name">ESP32 + OBD-II</div><div class="tc-role">Real hardware · ~₹1,400/vehicle</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">🔊</div><div><div class="tc-name">WEB SPEECH API</div><div class="tc-role">English voice alerts · 19 types</div></div></div>
+      <div class="tech-card anim"><div class="tc-icon">📐</div><div><div class="tc-name">HAVERSINE FORMULA</div><div class="tc-role">GPS distance · Corridor routing</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ METRICS ════════════════════════════════════════════ -->
+<section id="metrics" class="sec sec-dark">
+  <div class="wrap">
+    <div class="label">Impact</div>
+    <h2 class="title">Measured Results</h2>
+    <div class="met-big">
+      <div class="met-card anim"><div class="met-n" style="color:var(--saf)">11 min</div><div class="met-l">Emergency Response</div><div class="met-bar-bg"><div class="met-bar" data-w="32" style="background:var(--saf)"></div></div><div class="met-note">vs national avg <b>34 minutes</b></div></div>
+      <div class="met-card anim"><div class="met-n" style="color:var(--wrn)">23 min</div><div class="met-l">Minutes Saved / Incident</div><div class="met-bar-bg"><div class="met-bar" data-w="68" style="background:var(--wrn)"></div></div><div class="met-note">each minute = <b>life-saving chance</b></div></div>
+      <div class="met-card anim"><div class="met-n" style="color:var(--a1)">87%</div><div class="met-l">ML Model Accuracy</div><div class="met-bar-bg"><div class="met-bar" data-w="87" style="background:var(--a1)"></div></div><div class="met-note">XGBoost · <b>25 features · 20k samples</b></div></div>
+    </div>
+    <div class="glass" style="overflow:hidden">
+      <table class="compare-table">
+        <tr><th>CAPABILITY</th><th>WITHOUT HILLSAFE AI</th><th>WITH HILLSAFE AI</th><th>GAIN</th></tr>
+        <tr><td class="ct-f">Emergency Response</td><td class="ct-b">34 min average</td><td class="ct-a">11 minutes</td><td class="ct-i">↑ 68% faster</td></tr>
+        <tr><td class="ct-f">Ambulance Route Clearance</td><td class="ct-b">Manual, 20+ min</td><td class="ct-a">Automated, &lt;2 min</td><td class="ct-i">↑ 90% faster</td></tr>
+        <tr><td class="ct-f">Accident Detection</td><td class="ct-b">Someone calls 112</td><td class="ct-a">AI detects in &lt;2s</td><td class="ct-i">↑ Real-time</td></tr>
+        <tr><td class="ct-f">Nearby Vehicle Alert</td><td class="ct-b">Not possible</td><td class="ct-a">&lt;0.5 seconds</td><td class="ct-i">↑ New capability</td></tr>
+        <tr><td class="ct-f">Hospital Pre-alert</td><td class="ct-b">Not done</td><td class="ct-a">Blood type + ETA</td><td class="ct-i">↑ New capability</td></tr>
+        <tr><td class="ct-f">Danger Prediction</td><td class="ct-b">None</td><td class="ct-a">87% accuracy</td><td class="ct-i">↑ New capability</td></tr>
+        <tr><td class="ct-f">Hardware Cost / Vehicle</td><td class="ct-b">Expensive systems</td><td class="ct-a">₹1,400 only</td><td class="ct-i">↑ 95% cheaper</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ GLOBAL COMPARISON ═══════════════════════════════════ -->
+<section id="comparison" class="sec">
+  <div class="wrap">
+    <div class="label">Why This Design</div>
+    <h2 class="title">Real-World Problems Solved</h2>
+    <p class="desc">Ten concrete failures on Indian mountain roads, and what HillSafe AI does instead.</p>
+    <div class="glass" style="overflow:hidden;margin-bottom:56px">
+      <table class="compare-table">
+        <tr><th>PROBLEM (BEFORE)</th><th>HILLSAFE AI SOLUTION</th><th>RESULT</th></tr>
+        <tr><td class="ct-f">34 min emergency response</td><td class="ct-b">Green Corridor clears route pre-departure</td><td class="ct-a">11 minutes</td></tr>
+        <tr><td class="ct-f">0% signal at Zoji La / Banihal</td><td class="ct-b">Black-box + V2V (no internet needed)</td><td class="ct-a">Detected regardless</td></tr>
+        <tr><td class="ct-f">No physical speed enforcement</td><td class="ct-b">Remote ECU speed lock via OBD-II</td><td class="ct-a">Non-negotiable limits</td></tr>
+        <tr><td class="ct-f">Crash gives nearby vehicles no warning</td><td class="ct-b">V2V sudden-deceleration cascade</td><td class="ct-a">&lt;0.5 second alert</td></tr>
+        <tr><td class="ct-f">No idea how long a jam will last</td><td class="ct-b">Jam Clearance Predictor</td><td class="ct-a">Live ETA per zone</td></tr>
+        <tr><td class="ct-f">Clearing a jam needs a traffic cop</td><td class="ct-b">AI Lane Marshal — auto lane assignment</td><td class="ct-a">Self-organizing flow</td></tr>
+        <tr><td class="ct-f">Minor violations: ignored or over-punished</td><td class="ct-b">Daily consolidated evening report</td><td class="ct-a">Accountability, no disruption</td></tr>
+        <tr><td class="ct-f">Can't tell if jam = bad road or bad driving</td><td class="ct-b">Jam Root-Cause Classifier</td><td class="ct-a">Flyovers built where needed</td></tr>
+        <tr><td class="ct-f">Accident investigation shuts road for days</td><td class="ct-b">Black-box forensic reconstruction</td><td class="ct-a">Full timeline in seconds</td></tr>
+        <tr><td class="ct-f">Overtaking is a risky judgement call</td><td class="ct-b">V2V overtake detection + speed assist</td><td class="ct-a">Safer, legal-limit overtakes</td></tr>
+      </table>
+    </div>
+
+    <div class="label">Global Context</div>
+    <h2 class="title">Developed Nations vs. India</h2>
+    <p class="desc">Why the same off-the-shelf solution doesn't transfer directly to Indian mountain terrain.</p>
+    <div class="glass" style="overflow:hidden;margin-bottom:40px">
+      <table class="compare-table">
+        <tr><th>FACTOR</th><th>DEVELOPED NATIONS (US/EU/JAPAN)</th><th>INDIA (J&amp;K TERRAIN)</th></tr>
+        <tr><td class="ct-f">Road infrastructure</td><td class="ct-b">Multi-lane, tunnels, guardrails</td><td class="ct-b">Single-lane, landslide-prone, seasonal</td></tr>
+        <tr><td class="ct-f">Connectivity</td><td class="ct-b">Near-universal 4G/5G</td><td class="ct-b">0% signal at Zoji La</td></tr>
+        <tr><td class="ct-f">Affordable cost/vehicle</td><td class="ct-b">$500+ acceptable</td><td class="ct-b">Only ~₹1,400 viable at scale</td></tr>
+        <tr><td class="ct-f">Compliance culture</td><td class="ct-b">Camera-enforced, high discipline</td><td class="ct-b">Behavioural violations common</td></tr>
+        <tr><td class="ct-f">Existing systems</td><td class="ct-b">eCall (crash-only), V2V still research-stage</td><td class="ct-b">No integrated weather+traffic+ML+V2V system</td></tr>
+        <tr><td class="ct-f">Vehicle mix</td><td class="ct-b">Mostly private cars</td><td class="ct-b">Trucks, buses, bikes, autos mixed</td></tr>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--tx2);max-width:760px;line-height:1.8;margin-bottom:56px">
+      <b style="color:var(--saf)">Key insight:</b> in developed nations the open problem is mostly
+      <i>technological</i> — V2V itself is still experimental there. In India the problem is
+      <i>technology + infrastructure + driver behaviour + affordability</i> all at once — which is
+      why HillSafe AI is deliberately a multi-layer system rather than depending on any single layer.
+    </p>
+
+    <div class="label">Roadmap</div>
+    <h2 class="title">Where This Goes Next</h2>
+    <div class="feat-grid">
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(0,200,255,.08)">🏛️</div><div><div class="feat-name">NHAI</div></div></div><div class="feat-desc">Prioritising highway investment using real occupancy data instead of guesswork.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(0,230,118,.08)">🚓</div><div><div class="feat-name">TRAFFIC &amp; ROAD TRANSPORT DEPTS</div></div></div><div class="feat-desc">Enforcement targeting plus automated daily violation reports.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(255,140,0,.08)">🏢</div><div><div class="feat-name">INSURANCE COMPANIES</div></div></div><div class="feat-desc">Black-box reconstructions usable directly for claims verification.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(123,97,255,.1)">🚚</div><div><div class="feat-name">FLEET OPERATORS</div></div></div><div class="feat-desc">Truck and bus fleet safety monitoring at scale.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(0,200,255,.08)">🏙️</div><div><div class="feat-name">SMART CITY PROGRAMS</div></div></div><div class="feat-desc">Root-cause jam analysis for urban junctions like Delhi's ITO Chowk.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(0,230,118,.08)">🏔️</div><div><div class="feat-name">TOURISM BOARDS</div></div></div><div class="feat-desc">Safety systems for hill stations — Manali, Shimla, Gulmarg.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(255,140,0,.08)">🌦️</div><div><div class="feat-name">DISASTER MANAGEMENT</div></div></div><div class="feat-desc">Weather-landslide correlation and early warning.</div></div>
+      <div class="feat anim"><div class="feat-top"><div class="feat-icon" style="background:rgba(123,97,255,.1)">🌏</div><div><div class="feat-name">REGIONAL EXPANSION</div></div></div><div class="feat-desc">Nepal, Bhutan and other Himalayan-terrain neighbours face near-identical problems.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ TEAM ════════════════════════════════════════════════ -->
+<section id="team" class="sec">
+  <div class="wrap">
+    <div class="label">The Developer</div>
+    <h2 class="title">The Developer</h2>
+    <div class="team-grid">
+      <div class="team-card anim-l" style="max-width:480px;margin:0 auto">
+        <div class="team-av">👨‍💻</div>
+        <div class="team-name">SAFEER AHMED</div>
+        <div class="team-role">Developer · Designer · Architect</div>
+        <div class="team-inst">B.Tech Computer Science Engineering · J&K India</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.75;margin:14px 0 18px;font-style:italic;
+          border-left:3px solid var(--a1);padding:10px 14px;background:rgba(0,200,255,.04);border-radius:0 8px 8px 0;text-align:left">
+          "I grew up watching accidents happen on J&K mountain roads with no one coming to help in time.
+          HillSafe AI is my answer — built to make sure the next ambulance arrives before it is too late."
+        </div>
+        <div class="team-skills">
+          <span class="t-sk">Node.js</span><span class="t-sk">Python</span>
+          <span class="t-sk">MySQL</span><span class="t-sk">Three.js</span>
+          <span class="t-sk">HTML / CSS / JS</span><span class="t-sk">C++ ESP32</span>
+          <span class="t-sk">XGBoost ML</span><span class="t-sk">Socket.io</span>
+        </div>
+        <div class="team-gh" style="margin-top:12px">📂 github.com/safeerahmed8/Hill_Safe_AI</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="line"></div>
+
+<!-- ══ LAUNCH ═════════════════════════════════════════════ -->
+<section id="launch" class="sec sec-dark">
+  <div class="wrap">
+    <div class="launch-inner anim">
+      <div class="label" style="justify-content:center">🚀 Quick Launch</div>
+      <h2 class="launch-title">Run the Project Now</h2>
+      <p class="launch-desc">Make sure <span style="color:var(--saf);font-family:'Share Tech Mono',monospace">node server.js</span> is running, then click any button below to open that demo instantly.</p>
+      <div class="launch-main">
+        <a class="btn btn-cta" href="/launcher.html" target="_blank" style="font-size:12px;padding:16px 36px;margin-bottom:20px;display:inline-flex">
+          🚀 LAUNCH FULL PROJECT
+        </a>
+      </div>
+      <div class="launch-sub">
+        <a class="btn btn-ghost btn-sm" href="/dashboard.html" target="_blank">🗺️ Dashboard</a>
+        <a class="btn btn-ghost btn-sm" href="/simulation.html" target="_blank">🎬 2D Sim</a>
+        <a class="btn btn-ghost btn-sm" href="/driver_app.html" target="_blank">📱 Driver App</a>
+        <a class="btn btn-ghost btn-sm" href="/hillsafe_realroad.html" target="_blank">📹 Real Road</a>
+      </div>
+      <div class="launch-note">
+        Main server: <span>http://localhost:3000</span> &nbsp;|&nbsp;
+        ML API: <span>http://localhost:5000</span> &nbsp;|&nbsp;
+        Database: <span>MySQL · hill_safe_ai</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="fg-brand">
+        <div class="nav-brand"><div class="nav-logo-box" style="animation:none">🏔</div>
+          <div><span class="nav-name" style="font-size:14px">HILLSAFE AI</span><span class="nav-sub">v9.0 · J&K India</span></div></div>
+        <p>World's first AI-powered mountain road safety system. Built to save lives on J&K highways. Full-stack · Real hardware · AI/ML.</p>
+      </div>
+      <div class="fg-links">
+        <h4>Demos</h4>
+        <a href="/dashboard.html" target="_blank">🗺️ Live Dashboard</a>
+        <a href="/simulation.html" target="_blank">🎬 17-Phase Simulation</a>
+        <a href="/driver_app.html" target="_blank">📱 Android Driver App</a>
+        <a href="/hillsafe_realroad.html" target="_blank">📹 Real Road Footage</a>
+      </div>
+      <div class="fg-links">
+        <h4>Tech Stack</h4>
+        <a href="#">Node.js + Express + Socket.io</a>
+        <a href="#">Python + XGBoost + FastAPI</a>
+        <a href="#">MySQL + phpMyAdmin (XAMPP)</a>
+        <a href="#">Leaflet.js + Three.js</a>
+        <a href="#">ESP32 + OBD-II + GPS</a>
+        <a href="#">Open-Meteo + Twilio</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="fb-copy">© 2025 HILLSAFE AI · SAFEER AHMED · B.TECH CSE · J&K INDIA</div>
+      <div class="fb-tech">Node.js · Python · MySQL · Three.js · ESP32 · AI/ML</div>
+    </div>
+  </div>
+</footer>
 
 <script>
-// ============================================
-// DEBUG
-// ============================================
-function debug(msg) {
-  const box = document.getElementById('debug');
-  box.innerHTML += '<br>' + msg;
-  box.scrollTop = box.scrollHeight;
+// ── PARTICLES ─────────────────────────────────────────────
+const pc=document.getElementById('particleCanvas');
+const cx=pc.getContext('2d');
+let W,H,pts=[];
+function initPC(){
+  W=pc.width=innerWidth;H=pc.height=innerHeight;pts=[];
+  const n=Math.floor(W*H/12000);
+  for(let i=0;i<n;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.4,o:Math.random()*.4+.1});
 }
-
-// ============================================
-// CLOCK
-// ============================================
-setInterval(() => {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
-}, 1000);
-
-// ============================================
-// VOICE ALERTS
-// ============================================
-function speak(message, priority = 'normal') {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(message);
-  u.lang = 'en-IN'; u.rate = priority === 'emergency' ? 0.82 : 0.9;
-  u.pitch = priority === 'emergency' ? 1.4 : 1.0; u.volume = 1.0;
-  window.speechSynthesis.speak(u);
-}
-function speakAfter(msg, delay, p = 'normal') { setTimeout(() => speak(msg, p), delay); }
-function testVoice() { speak('HillSafe AI is active. One hundred vehicles are being monitored on all mountain roads of Jammu and Kashmir.', 'normal'); }
-function voiceAccident(v)   { speak(`Emergency! Accident detected. Vehicle ${v.plate}. Driver ${v.name}. Blood group ${v.blood}. Rescue team alerted.`, 'emergency'); speakAfter('Ambulance dispatched. Emergency room alerted. All units respond immediately.', 5000, 'emergency'); }
-function voiceDanger(z, s)  { speak(`Alert. Vehicle entering danger zone. ${z}. Speed limit ${s} kilometers per hour. Slow down immediately.`, 'emergency'); }
-function voiceChallan(p,sp,l){ speak(`Overspeed challan issued. Vehicle ${p}. Speed ${sp}. Limit is ${l}. Fine generated automatically.`, 'emergency'); }
-function voiceReset()       { speak('All clear. Fleet reset. HillSafe AI monitoring all one hundred vehicles.', 'normal'); }
-
-// ============================================
-// MAP SETUP
-// ============================================
-debug('✅ Map initializing...');
-const map = L.map('map').setView([34.0, 75.8], 8);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: 'HillSafe AI v5.0 | OpenStreetMap'
-}).addTo(map);
-
-// J&K Boundary
-const jkGeoJSON = {
-  type: 'Feature',
-  properties: { name: 'Jammu & Kashmir' },
-  geometry: {
-    type: 'Polygon',
-    coordinates: [[
-      [73.75, 32.95], [74.20, 32.50], [74.80, 32.55], [75.40, 32.75],
-      [75.90, 33.10], [76.50, 33.25], [77.20, 33.50], [77.80, 33.80],
-      [78.50, 34.50], [78.80, 35.20], [78.20, 35.80], [77.50, 36.20],
-      [76.80, 36.60], [75.80, 36.90], [74.80, 36.80], [74.00, 36.50],
-      [73.50, 36.00], [73.00, 35.50], [72.50, 35.00], [72.80, 34.20],
-      [73.20, 33.50], [73.75, 32.95]
-    ]]
-  }
-};
-L.geoJSON(jkGeoJSON, {
-  style: { color: '#2e8fff', weight: 2, opacity: 0.8, fillColor: '#2e8fff', fillOpacity: 0.03, dashArray: '6, 4' }
-}).addTo(map).bindPopup('<b>📍 Jammu & Kashmir</b><br>HillSafe AI — 100 Vehicles Monitored');
-
-L.marker([36.2, 75.5], {
-  icon: L.divIcon({ html: `<div class="jk-label">📍 J&K — HillSafe AI Zone</div>`, className: '', iconAnchor: [80, 0] })
-}).addTo(map);
-
-debug('✅ J&K boundary drawn!');
-
-// ============================================
-// MARKER CLUSTER GROUP for 100 vehicles
-// ============================================
-const clusterGroup = L.markerClusterGroup({
-  maxClusterRadius: 40,
-  iconCreateFunction: function(cluster) {
-    const count = cluster.getChildCount();
-    const color = count > 20 ? '#ff3d3d' : count > 10 ? '#ff8c00' : '#2e8fff';
-    return L.divIcon({
-      html: `<div style="background:${color};color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Share Tech Mono',monospace;font-size:13px;border:2px solid white;box-shadow:0 0 8px ${color};">${count}</div>`,
-      className: '', iconSize: [36, 36], iconAnchor: [18, 18]
-    });
-  }
-});
-map.addLayer(clusterGroup);
-debug('✅ MarkerCluster ready for 100 vehicles!');
-
-// ============================================
-// ICONS
-// ============================================
-function getIcon(type, status) {
-  const emojis = { Car: '🚗', Truck: '🚛', Bus: '🚌', Bike: '🏍️' };
-  const emoji  = status === 'accident' ? '💥' : status === 'danger' ? '⚠️' : (emojis[type] || '🚗');
-  const glow   = status === 'accident' ? 'drop-shadow(0 0 6px red)' : status === 'danger' ? 'drop-shadow(0 0 4px orange)' : '';
-  return L.divIcon({
-    html: `<div style="font-size:20px;filter:${glow};">${emoji}</div>`,
-    className: '', iconSize: [26, 26], iconAnchor: [13, 13]
-  });
-}
-
-// ============================================
-// STATE
-// ============================================
-const vehicleMarkers = {};       // id → marker
-const vehicleData    = {};       // id → { plate, name, type, speed, status, zone }
-let   alertCount     = 0;
-let   challanCount   = 0;
-let   showLimit      = 30;       // show 30 cards initially
-
-// ============================================
-// LOAD INITIAL POSITIONS + BUILD MARKERS
-// ============================================
-async function loadFleet() {
-  debug('⏳ Loading 100 vehicles...');
-  try {
-    const pRes = await fetch('/positions');
-    const pData = await pRes.json();
-    const positions = pData.positions;
-
-    debug('✅ Positions loaded: ' + Object.keys(positions).length);
-
-    Object.keys(positions).forEach(id => {
-      const v = positions[id];
-      vehicleData[id] = { plate: v.plate, name: v.name, type: v.type, blood: v.blood, speed: v.speed, status: v.status, zone: v.currentZone };
-
-      const marker = L.marker([v.lat, v.lng], { icon: getIcon(v.type, v.status) });
-      marker.bindPopup(buildPopup(id, v));
-      vehicleMarkers[id] = marker;
-      clusterGroup.addLayer(marker);
-    });
-
-    debug('✅ 100 markers added to cluster!');
-    renderVehicleList();
-  } catch(err) {
-    debug('❌ Fleet error: ' + err.message);
-  }
-}
-
-function buildPopup(id, v) {
-  return `
-    <div style="font-family:'Rajdhani',sans-serif;min-width:170px;">
-      <b style="font-size:14px;color:#2e8fff;">${v.plate}</b>
-      <hr style="margin:5px 0;border-color:#1a2d50;">
-      👤 ${v.name}<br>
-      🚗 ${v.type} &nbsp; 🩸 ${v.blood}<br>
-      ⚡ Speed: <b>${v.speed} km/h</b><br>
-      📍 Status: <b style="color:${v.status==='accident'?'#ff3d3d':v.status==='danger'?'#ff8c00':'#14d490'}">${v.status.toUpperCase()}</b>
-      ${v.currentZone ? `<br>⚠️ <span style="color:#ff8c00">${v.currentZone}</span>` : ''}
-    </div>`;
-}
-
-// ============================================
-// RENDER VEHICLE LIST (with search + limit)
-// ============================================
-function renderVehicleList() {
-  const query = (document.getElementById('search').value || '').toLowerCase();
-  const list  = document.getElementById('vehicles-list');
-  list.innerHTML = '';
-
-  const ids = Object.keys(vehicleData);
-  const filtered = ids.filter(id => {
-    const v = vehicleData[id];
-    return !query || v.plate.toLowerCase().includes(query) || v.name.toLowerCase().includes(query);
-  });
-
-  // Sort: accident first, then danger, then normal
-  filtered.sort((a, b) => {
-    const order = { accident: 0, danger: 1, normal: 2 };
-    return (order[vehicleData[a].status] || 2) - (order[vehicleData[b].status] || 2);
-  });
-
-  const toShow = filtered.slice(0, showLimit);
-
-  toShow.forEach(id => {
-    const v   = vehicleData[id];
-    const spd = v.speed;
-    const spdClass = spd > 70 ? 'fast' : spd > 50 ? 'mid' : '';
-
-    const card = document.createElement('div');
-    card.className = `v-card ${v.status}`;
-    card.id = 'vcard-' + id;
-    card.innerHTML = `
-      <div class="v-plate">${v.plate}</div>
-      <span class="v-type-badge">${v.type}</span>
-      <div class="v-name">👤 ${v.name}</div>
-      <div class="v-speed ${spdClass}" id="spd-${id}">⚡ ${spd} km/h</div>
-      ${v.zone ? `<div class="v-zone">⚠️ ${v.zone}</div>` : `<div class="v-zone" id="zone-${id}"></div>`}
-    `;
-    card.onclick = () => {
-      const m = vehicleMarkers[id];
-      if (m) { map.setView(m.getLatLng(), 13); m.openPopup(); }
-    };
-    list.appendChild(card);
-  });
-
-  if (filtered.length > showLimit) {
-    const btn = document.createElement('button');
-    btn.className = 'show-more';
-    btn.textContent = `Show more (${filtered.length - showLimit} more vehicles)`;
-    btn.onclick = () => { showLimit += 30; renderVehicleList(); };
-    list.appendChild(btn);
-  }
-}
-
-function filterVehicles() { showLimit = 30; renderVehicleList(); }
-
-// ============================================
-// LOAD DANGER ZONES
-// ============================================
-async function loadZones() {
-  debug('⏳ Loading danger zones...');
-  try {
-    const res  = await fetch('/zones');
-    const data = await res.json();
-    const list = document.getElementById('zones-list');
-    list.innerHTML = '';
-
-    data.zones.forEach(zone => {
-      L.circle([zone.latitude, zone.longitude], {
-        color: '#ff3d3d', fillColor: '#ff3d3d',
-        fillOpacity: 0.15, radius: zone.radius_meters, weight: 2
-      }).addTo(map).bindPopup(`<b>🔴 ${zone.zone_name}</b><br>Limit: ${zone.speed_limit} km/h<br>Risk: ${zone.risk_level}`);
-
-      L.marker([zone.latitude, zone.longitude], {
-        icon: L.divIcon({
-          html: `<div style="background:#ff3d3d;color:white;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;white-space:nowrap;font-family:'Rajdhani',sans-serif;">🔴 ${zone.zone_name}</div>`,
-          className: '', iconAnchor: [60, 0]
-        })
-      }).addTo(map);
-
-      const card = document.createElement('div');
-      card.className = 'z-card';
-      card.innerHTML = `<div class="z-name">🔴 ${zone.zone_name}</div><div class="z-info">⚡ Max: ${zone.speed_limit} km/h | ⚠️ ${zone.risk_level}</div>`;
-      list.appendChild(card);
-    });
-
-    debug('✅ Zones loaded: ' + data.zones.length);
-  } catch(err) {
-    debug('❌ Zones error: ' + err.message);
-  }
-}
-
-// ============================================
-// ALERTS
-// ============================================
-function addAlert(msg, type = 'danger') {
-  alertCount++;
-  document.getElementById('alert-count').textContent = alertCount;
-  const list = document.getElementById('alerts-list');
-  const item = document.createElement('div');
-  item.className = `alert-item ${type}`;
-  item.innerHTML = `<div class="alert-time">${new Date().toLocaleTimeString()}</div>${msg}`;
-  list.insertBefore(item, list.firstChild);
-  if (list.children.length > 15) list.removeChild(list.lastChild);
-}
-
-// ============================================
-// UPDATE FLEET STATS
-// ============================================
-function updateStats() {
-  let normal = 0, danger = 0, accident = 0;
-  Object.values(vehicleData).forEach(v => {
-    if (v.status === 'accident') accident++;
-    else if (v.status === 'danger') danger++;
-    else normal++;
-  });
-  const total = normal + danger + accident;
-  document.getElementById('stat-total').textContent    = total;
-  document.getElementById('stat-normal').textContent   = normal;
-  document.getElementById('stat-danger').textContent   = danger;
-  document.getElementById('stat-accident').textContent = accident;
-  document.getElementById('chip-normal').textContent   = normal;
-  document.getElementById('chip-danger').textContent   = danger;
-  document.getElementById('chip-accident').textContent = accident;
-  document.getElementById('chip-challans').textContent = challanCount;
-}
-
-// ============================================
-// DEMO CONTROLS
-// ============================================
-async function simulateAccident(id) {
-  try {
-    const res  = await fetch(`/simulate-accident/${id}`, { method: 'POST' });
-    const data = await res.json();
-    if (data.error) { debug('❌ ' + data.error); return; }
-    debug('🚨 Accident triggered: Vehicle ' + id);
-  } catch(err) {
-    debug('❌ ' + err.message);
-  }
-}
-
-async function massAccident() {
-  try {
-    const res  = await fetch('/simulate-mass-accident', { method: 'POST' });
-    const data = await res.json();
-    addAlert(`💥 MASS ACCIDENT — ${data.count} vehicles involved!`, 'danger');
-    debug('💥 Mass accident: ' + data.count + ' vehicles');
-  } catch(err) {
-    debug('❌ ' + err.message);
-  }
-}
-
-async function resetAll() {
-  try {
-    await fetch('/reset-all', { method: 'POST' });
-    addAlert('✅ All vehicles reset to normal', 'info');
-    voiceReset();
-    debug('✅ All vehicles reset');
-  } catch(err) {
-    debug('❌ ' + err.message);
-  }
-}
-
-async function viewChallans() {
-  try {
-    const res  = await fetch('/challans');
-    const data = await res.json();
-    addAlert(`💸 ${data.total} auto-challans generated`, 'challan');
-    debug('💸 Challans: ' + data.total);
-  } catch(err) {
-    debug('❌ ' + err.message);
-  }
-}
-
-// ============================================
-// SOCKET.IO — LIVE UPDATES FOR 100 VEHICLES
-// ============================================
-debug('📡 Connecting Socket.io...');
-const socket = io();
-
-socket.on('connect', () => {
-  debug('📡 Socket.io LIVE — 100 vehicles tracked!');
-  addAlert('📡 Live tracking connected — 100 vehicles active', 'info');
-  speak('HillSafe AI version five connected. One hundred vehicles are now being tracked live across Jammu and Kashmir.', 'normal');
-});
-
-// Batch DOM updates — only re-render list every 3 ticks (6s)
-let ticksSinceRender = 0;
-
-socket.on('vehicleUpdate', (positions) => {
-  Object.keys(positions).forEach(id => {
-    const v      = positions[id];
-    const marker = vehicleMarkers[id];
-
-    if (marker) {
-      marker.setLatLng([v.lat, v.lng]);
-      marker.setIcon(getIcon(v.type, v.status));
-      marker.setPopupContent(buildPopup(id, v));
+function drawPC(){
+  cx.clearRect(0,0,W,H);
+  pts.forEach((p,i)=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(0,200,255,${p.o})`;cx.fill();
+    for(let j=i+1;j<pts.length;j++){
+      const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<110){cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(q.x,q.y);
+        cx.strokeStyle=`rgba(0,200,255,${.07*(1-d/110)})`;cx.lineWidth=.5;cx.stroke();}
     }
+  });requestAnimationFrame(drawPC);
+}
+initPC();drawPC();
+window.addEventListener('resize',initPC);
 
-    // Update local data store
-    vehicleData[id] = {
-      plate:  v.plate,
-      name:   v.name,
-      type:   v.type,
-      blood:  v.blood,
-      speed:  v.speed,
-      status: v.status,
-      zone:   v.currentZone
-    };
-
-    // Live-update visible card if rendered (fast path)
-    const spdEl  = document.getElementById('spd-' + id);
-    const zoneEl = document.getElementById('zone-' + id);
-    const card   = document.getElementById('vcard-' + id);
-    if (spdEl) {
-      spdEl.textContent = `⚡ ${v.speed} km/h`;
-      spdEl.className   = `v-speed${v.speed > 70 ? ' fast' : v.speed > 50 ? ' mid' : ''}`;
-    }
-    if (zoneEl) zoneEl.textContent = v.currentZone ? `⚠️ ${v.currentZone}` : '';
-    if (card)   card.className = `v-card ${v.status}`;
+// ── NAVBAR SCROLL ──────────────────────────────────────────
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',scrollY>40);
+  // active nav link
+  ['problem','features','demos','tech','metrics','comparison','team','launch'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const nl=document.querySelector(`.nl[href="#${id}"]`);
+    if(!nl)return;
+    const rect=el.getBoundingClientRect();
+    if(rect.top<=80&&rect.bottom>80)nl.classList.add('on');
+    else nl.classList.remove('on');
   });
+});
 
-  updateStats();
+// ── SCROLL ANIMATIONS ──────────────────────────────────────
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show');});
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.anim,.anim-l,.anim-r').forEach(el=>io.observe(el));
 
-  // Re-render vehicle list every 3 socket ticks
-  ticksSinceRender++;
-  if (ticksSinceRender >= 3) {
-    ticksSinceRender = 0;
-    const q = document.getElementById('search').value;
-    if (!q) renderVehicleList(); // only re-sort if no active search
+// Animate metric bars when visible
+const barIO=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.met-bar').forEach(b=>{
+        b.style.width=(b.dataset.w||'0')+'%';
+      });
+    }
+  });
+},{threshold:.3});
+document.querySelectorAll('.met-card').forEach(c=>barIO.observe(c));
+
+// ── HERO COUNTERS ──────────────────────────────────────────
+function counter(id,target,suffix='',dur=1500){
+  const el=document.getElementById(id);if(!el)return;
+  let start=null;
+  const step=ts=>{
+    if(!start)start=ts;
+    const prog=Math.min((ts-start)/dur,1);
+    const ease=1-Math.pow(1-prog,3);
+    el.textContent=Math.round(ease*target)+suffix;
+    if(prog<1)requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+setTimeout(()=>{
+  counter('cnt1',100,'+');
+  counter('cnt2',11,' min');
+  counter('cnt3',87,'%');
+  counter('cnt4',8);
+},1000);
+</script>
+
+<script>
+(function(){
+  var b = document.getElementById('hs-conn-banner');
+  function show(msg){ b.innerHTML = msg; b.style.display = 'block'; }
+  // Case 1 — opened directly as a file, not through the server
+  if (location.protocol === 'file:') {
+    show('&#9888; <b>Opened as a local file.</b> HillSafe AI needs the server running. ' +
+         'Open a terminal &rarr; <code>node server.js</code> &rarr; then browse to ' +
+         '<code>http://localhost:3000</code> instead of double-clicking this file.');
+    return;
   }
-});
-
-socket.on('dangerZoneAlert', (data) => {
-  addAlert(`⚠️ ${data.vehicle.plate} → ${data.zone.name} | Limit: ${data.zone.speedLimit} km/h`, 'warning');
-  challanCount++;
-  document.getElementById('chip-challans').textContent = challanCount;
-  addAlert(`💸 Auto-challan: ${data.vehicle.plate} overspeed in ${data.zone.name}`, 'challan');
-  voiceDanger(data.zone.name, data.zone.speedLimit);
-  speakAfter(() => voiceChallan(data.vehicle.plate, data.vehicle.speed, data.zone.speedLimit), 4000);
-});
-
-socket.on('accidentAlert', (data) => {
-  addAlert(`🚨 ACCIDENT — ${data.vehicle.plate} — ${data.vehicle.name} — 🩸 ${data.vehicle.blood}`, 'danger');
-  voiceAccident(data.vehicle);
-});
-
-socket.on('disconnect', () => debug('❌ Socket disconnected'));
-
-// ============================================
-// START
-// ============================================
-debug('🚀 HillSafe AI v5.0 — Initializing...');
-loadFleet();
-loadZones();
+  // Case 2 — page loaded via http(s) but the Node server isn't reachable
+  fetch('/api/health', { cache: 'no-store' })
+    .then(function(r){ if(!r.ok) throw 0; })
+    .catch(function(){
+      show('&#9888; <b>Cannot reach the HillSafe AI server.</b> Make sure ' +
+           '<code>node server.js</code> is running in your terminal, then refresh this page. ' +
+           '<button onclick="location.reload()">Retry</button>');
+    });
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#04080e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HillSafe AI">
+<link rel="manifest" href="/manifest.json">
+<title>HillSafe AI Driver</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#04080e;--a1:#00c8ff;--a2:#00ff88;--a3:#7b61ff;
+  --dng:#ff2020;--wrn:#ff8c00;--saf:#00e676;
+  --tx1:#b8d8f0;--tx2:#4e7899;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Rajdhani',sans-serif;color:var(--tx1);
+  -webkit-font-smoothing:antialiased}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes slide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STATUS BAR SAFE AREA */
+.app{display:flex;flex-direction:column;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+/* TOP BAR */
+.topbar{background:rgba(4,8,14,.98);border-bottom:1px solid rgba(0,200,255,.15);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.app-logo{display:flex;align-items:center;gap:7px}
+.al-icon{width:32px;height:32px;background:linear-gradient(135deg,#00c8ff,#00ff88);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.al-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:var(--a1);letter-spacing:1.5px}
+.al-sub{font-size:7px;color:var(--tx2);letter-spacing:2px;display:block}
+.conn-badge{margin-left:auto;display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 8px;border-radius:4px;border:1px solid}
+.conn-badge.on{color:var(--saf);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.06)}
+.conn-badge.off{color:var(--dng);border-color:rgba(255,32,32,.3);background:rgba(255,32,32,.06)}
+.conn-dot{width:6px;height:6px;border-radius:50%}
+
+/* MAIN CONTENT */
+.main{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.main::-webkit-scrollbar{display:none}
+
+/* SPEED CARD */
+.speed-card{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.15);
+  border-radius:14px;padding:18px;text-align:center;position:relative;overflow:hidden}
+.speed-card::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);
+  width:200px;height:200px;background:radial-gradient(circle,rgba(0,200,255,.06),transparent 70%);
+  pointer-events:none}
+.speed-num{font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:var(--a1);
+  line-height:1;text-shadow:0 0 30px rgba(0,200,255,.4)}
+.speed-unit{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--tx2);letter-spacing:2px;margin-top:3px}
+.speed-limit{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;
+  font-family:'Share Tech Mono',monospace;font-size:10px}
+.sl-label{color:var(--tx2)}
+.sl-val{color:#ffd700;font-weight:700}
+.sl-status{padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:1px;font-weight:700}
+.sl-ok{background:rgba(0,230,118,.12);color:var(--saf);border:1px solid rgba(0,230,118,.25)}
+.sl-warn{background:rgba(255,32,32,.12);color:var(--dng);border:1px solid rgba(255,32,32,.3);animation:bk .6s infinite}
+
+/* RISK BADGE */
+.risk-badge{border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.risk-badge.low{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2)}
+.risk-badge.med{background:rgba(255,210,0,.08);border:1px solid rgba(255,210,0,.2)}
+.risk-badge.high{background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.3)}
+.risk-badge.crit{background:rgba(255,32,32,.12);border:1px solid rgba(255,32,32,.4);animation:pulse 1s infinite}
+.rb-icon{font-size:28px}
+.rb-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:1px}
+.rb-msg{font-size:11px;color:var(--tx1);line-height:1.4;margin-top:2px}
+
+/* INFO GRID */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-card{background:rgba(10,20,35,.7);border:1px solid rgba(0,200,255,.1);border-radius:10px;padding:12px}
+.ic-icon{font-size:18px;margin-bottom:4px}
+.ic-label{font-size:8px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
+.ic-val{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--tx1)}
+.ic-val.r{color:var(--dng)}.ic-val.g{color:var(--saf)}.ic-val.a{color:var(--wrn)}.ic-val.c{color:var(--a1)}
+
+/* ALERT CARD */
+.alert-card{border-radius:10px;padding:12px 14px;animation:slide .3s ease;border-left:4px solid}
+.alert-card.dng{background:rgba(255,32,32,.08);border:1px solid rgba(255,32,32,.2);border-left-color:var(--dng)}
+.alert-card.wrn{background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.2);border-left-color:var(--wrn)}
+.alert-card.saf{background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);border-left-color:var(--saf)}
+.alert-card.inf{background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.2);border-left-color:var(--a1)}
+.ac-head{display:flex;align-items:center;gap:7px}
+.ac-icon2{font-size:20px}
+.ac-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px}
+.ac-msg{font-size:11px;color:var(--tx1);line-height:1.5;margin-top:4px}
+.ac-time{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--tx2);margin-top:4px}
+
+/* SOS BUTTON */
+.sos-wrap{padding:0}
+.sos-btn{width:100%;padding:18px;background:var(--dng);border:none;border-radius:14px;
+  font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:#fff;letter-spacing:3px;
+  cursor:pointer;transition:all .2s;box-shadow:0 4px 24px rgba(255,32,32,.4);
+  display:flex;align-items:center;justify-content:center;gap:10px}
+.sos-btn:active{transform:scale(.97);box-shadow:0 2px 12px rgba(255,32,32,.3)}
+.sos-btn.active{animation:pulse .5s infinite;background:#cc0000}
+
+/* BOTTOM NAV */
+.bottom-nav{background:rgba(4,8,14,.98);border-top:1px solid rgba(0,200,255,.15);
+  display:flex;padding:8px 0;padding-bottom:max(8px, env(safe-area-inset-bottom));flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 0;cursor:pointer;transition:all .2s;border:none;background:none;color:var(--tx2)}
+.nav-btn.active{color:var(--a1)}
+.nav-btn:active{transform:scale(.92)}
+.nb-icon{font-size:20px}
+.nb-label{font-size:8px;letter-spacing:1px}
+
+/* SCREENS */
+.screen{display:none;flex:1;overflow-y:auto;padding:12px;flex-direction:column;gap:10px}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{display:none}
+
+/* Driver profile */
+.profile-card{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.15);
+  border-radius:14px;padding:18px;text-align:center}
+.pc-avatar{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#00c8ff,#00ff88);
+  display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 10px}
+.pc-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--tx1);margin-bottom:3px}
+.pc-plate{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--a1);margin-bottom:6px}
+.pc-badges{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.pc-badge{padding:2px 10px;border-radius:10px;font-size:9px;font-weight:700}
+
+/* Journey stats */
+.stat-row2{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid rgba(0,200,255,.06)}
+.stat-row2:last-child{border-bottom:none}
+.sr-label{font-size:11px;color:var(--tx2)}
+.sr-val{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--tx1)}
+
+/* Route map placeholder */
+.map-ph{background:rgba(4,12,24,.8);border:1px solid rgba(0,200,255,.12);
+  border-radius:14px;height:200px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px}
+.map-ph-icon{font-size:40px;opacity:.4}
+.map-ph-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx2);letter-spacing:2px}
+
+/* Zones list */
+.zone-row{background:rgba(10,20,35,.7);border:1px solid;border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.zr-head{display:flex;align-items:center;gap:8px}
+.zr-icon{font-size:18px}
+.zr-name{font-size:12px;font-weight:700;color:var(--tx1);flex:1}
+.zr-dist{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx2)}
+.zr-info{font-size:10px;color:var(--tx2);margin-top:3px}
+.zr-limit{font-family:'Orbitron',monospace;font-size:11px;margin-top:2px}
+
+/* LOADING SCREEN */
+#loadScreen{position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.ls-logo{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--a1);letter-spacing:3px}
+.ls-spin{width:36px;height:36px;border:3px solid rgba(0,200,255,.15);border-top-color:var(--a1);
+  border-radius:50%;animation:spin 1s linear infinite}
+.ls-txt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--tx2);letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loadScreen">
+  <div style="font-size:48px">🏔</div>
+  <div class="ls-logo">HILLSAFE AI</div>
+  <div class="ls-spin"></div>
+  <div class="ls-txt" id="loadTxt">CONNECTING TO SERVER...</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="app-logo">
+      <div class="al-icon">🏔</div>
+      <div><span class="al-title">HILLSAFE AI</span><span class="al-sub">DRIVER APP · J&K</span></div>
+    </div>
+    <div class="conn-badge off" id="connBadge">
+      <div class="conn-dot" style="background:var(--dng)" id="connDot"></div>
+      <span id="connTxt">OFFLINE</span>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+
+  <!-- 1. DASHBOARD SCREEN -->
+  <div class="screen active" id="scr-dash">
+
+    <!-- Speed -->
+    <div class="speed-card">
+      <div class="speed-num" id="spd-num">0</div>
+      <div class="speed-unit">km/h</div>
+      <div class="speed-limit">
+        <span class="sl-label">LIMIT:</span>
+        <span class="sl-val" id="spd-limit">60 km/h</span>
+        <span class="sl-status sl-ok" id="spd-status">SAFE</span>
+      </div>
+    </div>
+
+    <!-- Risk badge -->
+    <div class="risk-badge low" id="riskBadge">
+      <div class="rb-icon">🟢</div>
+      <div>
+        <div class="rb-title" id="riskTitle">LOW RISK — ALL CLEAR</div>
+        <div class="rb-msg" id="riskMsg">Road conditions normal. Drive safely.</div>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="ic-icon">📍</div>
+        <div class="ic-label">LOCATION</div>
+        <div class="ic-val c" id="ic-loc" style="font-size:10px">Connecting GPS...</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⛰️</div>
+        <div class="ic-label">ALTITUDE</div>
+        <div class="ic-val" id="ic-alt">— m</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🌡️</div>
+        <div class="ic-label">WEATHER</div>
+        <div class="ic-val" id="ic-wx" style="font-size:10px">☀️ Clear</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🤖</div>
+        <div class="ic-label">AI SCORE</div>
+        <div class="ic-val g" id="ic-ai">0.12</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⚠️</div>
+        <div class="ic-label">NEXT ZONE</div>
+        <div class="ic-val a" id="ic-zone" style="font-size:10px">Banihal Pass</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🩸</div>
+        <div class="ic-label">BLOOD TYPE</div>
+        <div class="ic-val r" id="ic-blood">O+</div>
+      </div>
+    </div>
+
+    <!-- Active Alert -->
+    <div id="activeAlert" style="display:none"></div>
+
+    <!-- SOS BUTTON -->
+    <div class="sos-wrap">
+      <button class="sos-btn" id="sosBtn" onclick="triggerSOS()">
+        🆘 SOS — EMERGENCY
+      </button>
+    </div>
+
+  </div>
+
+  <!-- 2. ALERTS SCREEN -->
+  <div class="screen" id="scr-alerts">
+    <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--tx2);letter-spacing:2px;margin-bottom:4px">⚡ LIVE ALERTS</div>
+    <div id="alertsList">
+      <div class="alert-card inf">
+        <div class="ac-head"><div class="ac-icon2">🏔</div><div class="ac-title" style="color:var(--a1)">HILLSAFE AI ACTIVE</div></div>
+        <div class="ac-msg">Monitoring J&K mountain roads. All 8 danger zones under surveillance.</div>
+        <div class="ac-time">System ready</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. PROFILE SCREEN -->
+  <div class="screen" id="scr-profile">
+    <div class="profile-card">
+      <div class="pc-avatar">👤</div>
+      <div class="pc-name" id="p-name">Mohammad Rafi</div>
+      <div class="pc-plate" id="p-plate">JK-02-B-5567</div>
+      <div style="font-size:10px;color:var(--tx2)">Truck Driver · 12 years experience</div>
+      <div class="pc-badges">
+        <span class="pc-badge" style="background:rgba(0,230,118,.12);color:var(--saf);border:1px solid rgba(0,230,118,.25)">✅ VERIFIED</span>
+        <span class="pc-badge" style="background:rgba(0,200,255,.1);color:var(--a1);border:1px solid rgba(0,200,255,.25)">🏅 SAFE DRIVER</span>
+      </div>
+    </div>
+
+    <div style="background:rgba(10,20,35,.7);border:1px solid rgba(0,200,255,.1);border-radius:12px;padding:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;color:var(--tx2);letter-spacing:2px;margin-bottom:10px">📊 JOURNEY STATS</div>
+      <div class="stat-row2"><div class="sr-label">Today's Distance</div><div class="sr-val" id="s-dist">0 km</div></div>
+      <div class="stat-row2"><div class="sr-label">Drive Time</div><div class="sr-val" id="s-time">0h 0m</div></div>
+      <div class="stat-row2"><div class="sr-label">Total Challans</div><div class="sr-val" style="color:var(--wrn)" id="s-chal">0</div></div>
+      <div class="stat-row2"><div class="sr-label">Safety Score</div><div class="sr-val" style="color:var(--saf)" id="s-score">100/100</div></div>
+      <div class="stat-row2"><div class="sr-label">Blood Group</div><div class="sr-val" style="color:#ff6b6b">O+</div></div>
+      <div class="stat-row2"><div class="sr-label">Emergency Contact</div><div class="sr-val">+91-98765-43210</div></div>
+    </div>
+  </div>
+
+  <!-- 4. ZONES SCREEN -->
+  <div class="screen" id="scr-zones">
+    <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--tx2);letter-spacing:2px;margin-bottom:4px">🗺 DANGER ZONES · J&K</div>
+
+    <div class="zone-row" style="border-color:rgba(255,32,32,.3)">
+      <div class="zr-head"><div class="zr-icon">🔴</div><div class="zr-name">Banihal Pass Curve</div><div class="zr-dist">2,832m</div></div>
+      <div class="zr-info">Sharp hairpin · Fog common · Black ice in winter</div>
+      <div class="zr-limit" style="color:var(--dng)">⚠️ Limit: 20 km/h</div>
+    </div>
+    <div class="zone-row" style="border-color:rgba(255,32,32,.3)">
+      <div class="zr-head"><div class="zr-icon">🔴</div><div class="zr-name">Zoji La Summit</div><div class="zr-dist">3,528m</div></div>
+      <div class="zr-info">Most dangerous · Snow 8 months · Avalanche risk</div>
+      <div class="zr-limit" style="color:var(--dng)">⚠️ Limit: 20 km/h</div>
+    </div>
+    <div class="zone-row" style="border-color:rgba(255,140,0,.3)">
+      <div class="zr-head"><div class="zr-icon">🟡</div><div class="zr-name">Jawahar Tunnel</div><div class="zr-dist">1,890m</div></div>
+      <div class="zr-info">2,500m tunnel · Low visibility · CO risk</div>
+      <div class="zr-limit" style="color:var(--wrn)">⚠️ Limit: 40 km/h</div>
+    </div>
+    <div class="zone-row" style="border-color:rgba(255,140,0,.3)">
+      <div class="zr-head"><div class="zr-icon">🟡</div><div class="zr-name">Rohtang Pass</div><div class="zr-dist">3,978m</div></div>
+      <div class="zr-info">High altitude · Snow possible · Thin air</div>
+      <div class="zr-limit" style="color:var(--wrn)">⚠️ Limit: 25 km/h</div>
+    </div>
+    <div class="zone-row" style="border-color:rgba(255,210,0,.3)">
+      <div class="zr-head"><div class="zr-icon">🟢</div><div class="zr-name">Patnitop Hairpin</div><div class="zr-dist">2,024m</div></div>
+      <div class="zr-info">Blind turn · Tourist area · Congested</div>
+      <div class="zr-limit" style="color:#ffd700">⚠️ Limit: 25 km/h</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchScreen('dash',this)">
+      <div class="nb-icon">🏠</div><div class="nb-label">DASHBOARD</div>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('alerts',this)">
+      <div class="nb-icon">⚡</div><div class="nb-label">ALERTS</div>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('zones',this)">
+      <div class="nb-icon">🗺</div><div class="nb-label">ZONES</div>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('profile',this)">
+      <div class="nb-icon">👤</div><div class="nb-label">PROFILE</div>
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ── SOCKET.IO ───────────────────────────────────────────────────
+// Load socket.io from server
+const ioScript = document.createElement('script');
+ioScript.src = '/socket.io/socket.io.js';
+ioScript.onload = initApp;
+ioScript.onerror = () => { document.getElementById('loadTxt').textContent = 'SERVER OFFLINE — RUN node server.js'; };
+document.head.appendChild(ioScript);
+
+// ── STATE ──────────────────────────────────────────────────────
+let speed = 0, aiScore = 0.12, distKm = 0, driveTime = 0;
+let challans = 0, safetyScore = 100, connected = false;
+let startTime = Date.now();
+let sosActive = false;
+const BLOOD = 'O+', PLATE = 'JK-02-B-5567', DRIVER = 'Mohammad Rafi';
+const VEHICLE_ID = '2'; // Which simulated vehicle we track
+
+// ── DANGER ZONES ─────────────────────────────────────────────
+const ZONES = [
+  { name:'Banihal Pass Curve', lat:33.5120, lng:75.2000, limit:20, alt:'2,832m', sev:'high' },
+  { name:'Zoji La Summit',     lat:34.2600, lng:75.4800, limit:20, alt:'3,528m', sev:'high' },
+  { name:'Jawahar Tunnel',     lat:33.3200, lng:75.1500, limit:40, alt:'1,890m', sev:'med'  },
+  { name:'Rohtang Pass',       lat:32.3714, lng:77.2441, limit:25, alt:'3,978m', sev:'med'  },
+  { name:'Sinthan Top',        lat:33.6500, lng:75.5000, limit:30, alt:'3,748m', sev:'med'  },
+  { name:'Mughal Road Curve',  lat:33.4800, lng:74.5200, limit:35, alt:'2,100m', sev:'low'  },
+  { name:'Nathatop Blind Curve',lat:33.0500, lng:75.1000,limit:30, alt:'2,390m', sev:'low'  },
+  { name:'Patnitop Hairpin',   lat:33.1000, lng:75.2800, limit:25, alt:'2,024m', sev:'low'  },
+];
+
+// ── INIT ────────────────────────────────────────────────────────
+function initApp() {
+  document.getElementById('loadTxt').textContent = 'CONNECTING TO SERVER...';
+
+  const socket = io({
+    reconnection: true,
+    timeout: 8000,
+  });
+
+  socket.on('connect', () => {
+    connected = true;
+    updateConnStatus(true);
+    document.getElementById('loadScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    speak('HillSafe AI driver app connected. Stay safe on J&K roads!');
+    addAlert('inf','🏔 CONNECTED','HillSafe AI server connected. Monitoring active.','System ready');
+  });
+
+  socket.on('disconnect', () => {
+    connected = false;
+    updateConnStatus(false);
+  });
+
+  socket.on('vehicleUpdate', data => {
+    // Get our vehicle's data
+    const v = data[VEHICLE_ID];
+    if (!v) return;
+    speed = v.speed || 0;
+    aiScore = v.aiScore || 0;
+    updateDashboard(v);
+  });
+
+  socket.on('dangerZoneAlert', data => {
+    if (data.vehicleId !== VEHICLE_ID) return;
+    const z = data.zone;
+    addAlert('dng', `⚠️ ${z.name.toUpperCase()}`, `Speed: ${data.vehicle.speed} km/h | Limit: ${z.speedLimit} km/h`, new Date().toLocaleTimeString());
+    updateRisk('critical', '🔴', 'DANGER ZONE!', `${z.name} — Reduce to ${z.speedLimit} km/h NOW!`);
+    speak(`Danger zone! ${z.name}. Speed limit ${z.speedLimit} kilometres per hour. Slow down immediately!`);
+    vibrate([200,100,200,100,400]);
+  });
+
+  socket.on('challanIssued', data => {
+    if (data.vehicleId !== VEHICLE_ID) return;
+    challans++;
+    safetyScore = Math.max(0, safetyScore - 10);
+    document.getElementById('s-chal').textContent = challans;
+    document.getElementById('s-score').textContent = safetyScore + '/100';
+    document.getElementById('s-score').style.color = safetyScore > 70 ? 'var(--saf)' : safetyScore > 40 ? 'var(--wrn)' : 'var(--dng)';
+    addAlert('wrn', `💸 CHALLAN — ₹${data.fine}`, `${data.zone} | ${data.speed} km/h in ${data.limit} zone`, new Date().toLocaleTimeString());
+    speak(`Challan! ${data.zone} mein ${data.speed} kilometre. Fine ${data.fine} rupaye.`);
+    vibrate([500, 200, 500]);
+  });
+
+  socket.on('accidentAlert', data => {
+    addAlert('dng', '🚨 ACCIDENT NEARBY', data.message || 'Accident detected on route. Slow down.', new Date().toLocaleTimeString());
+    updateRisk('critical', '🚨', 'ACCIDENT NEARBY!', 'Slow down. Emergency vehicles approaching.');
+    speak('Danger! Accident ahead on route. Reduce speed. Give way to emergency vehicles.');
+    vibrate([100,100,100,100,100,100,500]);
+  });
+
+  socket.on('greenCorridorAlert', data => {
+    if (data.targetVehicleId !== VEHICLE_ID) return;
+    const cls = data.priority === 'CRITICAL' ? 'dng' : 'wrn';
+    addAlert(cls, '🚑 AMBULANCE APPROACHING', data.instruction || 'Pull to left side immediately!', new Date().toLocaleTimeString());
+    updateRisk('high', '🚑', 'CLEAR THE ROAD!', data.instruction);
+    speak(data.voiceAlert || 'Ambulance approaching. Pull to left side immediately.');
+    vibrate([300, 100, 300, 100, 300]);
+  });
+
+  socket.on('weatherUpdate', data => {
+    if (!data.zones) return;
+    const banihal = data.zones.find(z => z.zoneId === 1);
+    if (banihal) {
+      document.getElementById('ic-wx').textContent = `${banihal.emoji} ${banihal.condition}`;
+      if (banihal.dangerMultiplier > 1.5) {
+        addAlert('wrn', `🌦️ WEATHER ALERT`, `${banihal.zoneName}: ${banihal.condition}. Danger ×${banihal.dangerMultiplier}`, new Date().toLocaleTimeString());
+      }
+    }
+  });
+
+  // GPS tracking
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(pos => {
+      const { latitude: lat, longitude: lng, altitude: alt, speed: gpsSpd } = pos.coords;
+      document.getElementById('ic-loc').textContent = `${lat.toFixed(4)}°N`;
+      if (alt) document.getElementById('ic-alt').textContent = `${Math.round(alt)}m`;
+      if (gpsSpd !== null) speed = Math.round(gpsSpd * 3.6); // m/s to km/h
+      // Find nearest danger zone
+      let nearest = ZONES[0], nearestDist = Infinity;
+      ZONES.forEach(z => {
+        const d = Math.hypot(lat - z.lat, lng - z.lng) * 111;
+        if (d < nearestDist) { nearestDist = d; nearest = z; }
+      });
+      document.getElementById('ic-zone').textContent = nearest.name + (nearestDist < 2 ? ' ⚠️' : '');
+    }, () => {
+      document.getElementById('ic-loc').textContent = 'GPS Unavailable';
+    }, { enableHighAccuracy: true, maximumAge: 1000 });
+  }
+
+  // Drive time counter
+  setInterval(() => {
+    if (!connected) return;
+    driveTime++;
+    distKm += speed / 3600;
+    const m = Math.floor(driveTime / 60), s = driveTime % 60;
+    document.getElementById('s-time').textContent = `${m}h ${s}m`;
+    document.getElementById('s-dist').textContent = distKm.toFixed(1) + ' km';
+  }, 1000);
+}
+
+function updateDashboard(v) {
+  // Speed
+  document.getElementById('spd-num').textContent = Math.round(speed);
+  const spd = Math.round(speed);
+  const lim = parseInt(document.getElementById('spd-limit').textContent);
+  const spdEl = document.getElementById('spd-num');
+  spdEl.style.color = spd > lim ? 'var(--dng)' : spd > lim * 0.8 ? 'var(--wrn)' : 'var(--a1)';
+
+  if (spd > lim) {
+    document.getElementById('spd-status').textContent = 'OVER LIMIT';
+    document.getElementById('spd-status').className = 'sl-status sl-warn';
+  } else {
+    document.getElementById('spd-status').textContent = 'SAFE';
+    document.getElementById('spd-status').className = 'sl-status sl-ok';
+  }
+
+  // AI Score
+  document.getElementById('ic-ai').textContent = aiScore.toFixed(2);
+  document.getElementById('ic-ai').className = 'ic-val ' + (aiScore > 0.7 ? 'r' : aiScore > 0.4 ? 'a' : 'g');
+
+  // Risk level based on status
+  if (v.status === 'danger') {
+    updateRisk('high', '🟠', 'HIGH RISK — DANGER ZONE', `${v.currentZone || 'Danger area'} — reduce speed!`);
+  } else if (v.status === 'accident') {
+    updateRisk('critical', '🔴', 'CRITICAL — ACCIDENT', 'Emergency response activated');
+  } else if (v.rerouted) {
+    updateRisk('med', '🟡', 'REROUTING ACTIVE', 'Follow alternate route instructions');
+  } else if (aiScore > 0.6) {
+    updateRisk('high', '🟠', 'HIGH AI RISK SCORE', 'Reduce speed. Be cautious ahead.');
+  } else {
+    updateRisk('low', '🟢', 'LOW RISK — ALL CLEAR', 'Road conditions normal. Drive safely.');
+  }
+}
+
+function updateRisk(level, icon, title, msg) {
+  const badge = document.getElementById('riskBadge');
+  const cls = { low:'low', med:'med', high:'high', critical:'crit' }[level] || 'low';
+  badge.className = 'risk-badge ' + cls;
+  document.getElementById('riskTitle').textContent = title;
+  document.getElementById('riskMsg').textContent = msg;
+  badge.querySelector('.rb-icon').textContent = icon;
+}
+
+function updateConnStatus(on) {
+  const badge = document.getElementById('connBadge');
+  const dot = document.getElementById('connDot');
+  const txt = document.getElementById('connTxt');
+  badge.className = 'conn-badge ' + (on ? 'on' : 'off');
+  dot.style.background = on ? 'var(--saf)' : 'var(--dng)';
+  txt.textContent = on ? 'LIVE' : 'OFFLINE';
+}
+
+function addAlert(cls, title, msg, time) {
+  const list = document.getElementById('alertsList');
+  const el = document.createElement('div');
+  el.className = 'alert-card ' + cls;
+  const colors = { dng:'var(--dng)', wrn:'var(--wrn)', saf:'var(--saf)', inf:'var(--a1)' };
+  el.innerHTML = `<div class="ac-head">
+    <div class="ac-title" style="color:${colors[cls]||'var(--a1)'}">${title}</div>
+  </div>
+  <div class="ac-msg">${msg}</div>
+  <div class="ac-time">${time}</div>`;
+  list.insertBefore(el, list.firstChild);
+  while (list.children.length > 10) list.removeChild(list.lastChild);
+
+  // Show on dashboard too
+  if (cls === 'dng' || cls === 'wrn') {
+    const da = document.getElementById('activeAlert');
+    da.style.display = 'block';
+    da.innerHTML = el.outerHTML;
+    setTimeout(() => da.style.display = 'none', 8000);
+  }
+}
+
+// ── SOS ────────────────────────────────────────────────────────
+function triggerSOS() {
+  if (sosActive) return;
+  sosActive = true;
+  const btn = document.getElementById('sosBtn');
+  btn.classList.add('active');
+  btn.textContent = '🆘 SOS SENT — HELP COMING!';
+  speak('Emergency SOS activated! Sending location to family and hospital. Help is on the way!');
+  addAlert('dng', '🆘 SOS ACTIVATED', `Driver: ${DRIVER} | Vehicle: ${PLATE} | Blood: ${BLOOD}`, new Date().toLocaleTimeString());
+  vibrate([500, 200, 500, 200, 500, 200, 1000]);
+  // Server call
+  fetch('/simulate-accident/2', { method: 'POST' }).catch(() => {});
+  setTimeout(() => {
+    btn.classList.remove('active');
+    btn.innerHTML = '🆘 SOS — EMERGENCY';
+    sosActive = false;
+  }, 10000);
+}
+
+// ── UI HELPERS ─────────────────────────────────────────────────
+function switchScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-IN'; u.rate = 0.9; u.pitch = 1.05; u.volume = 1;
+  speechSynthesis.speak(u);
+}
+
+speechSynthesis.getVoices();
+setTimeout(() => speechSynthesis.getVoices(), 1000);
+</script>
+</body>
+</html>

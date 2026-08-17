@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HillSafe AI — 4D HD Incident Simulation</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif}
+canvas{position:fixed;inset:0;width:100%!important;height:100%!important}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.1}}
+@keyframes slideR{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes wave{0%,100%{height:4px}50%{height:18px}}
+@keyframes siren{0%{border-color:#ff2020;box-shadow:0 0 30px rgba(255,32,32,.5)}50%{border-color:#0044ff;box-shadow:0 0 30px rgba(0,68,255,.5)}}
+@keyframes scanline{from{top:52px}to{top:100vh}}
+
+.scan{position:fixed;height:2px;left:0;right:0;background:rgba(0,200,255,.07);pointer-events:none;z-index:5;animation:scanline 9s linear infinite}
+#redFlash{position:fixed;inset:0;background:rgba(255,32,32,0);z-index:299;pointer-events:none;transition:background .08s}
+#redFlash.on{background:rgba(255,32,32,.4)}
+#sirenBorder{position:fixed;inset:0;border:0px solid transparent;z-index:298;pointer-events:none;transition:border .1s}
+#sirenBorder.on{border:5px solid #ff2020;animation:siren .5s infinite}
+
+/* TOP BAR */
+#top{position:fixed;top:0;left:0;right:0;height:52px;z-index:200;
+  background:rgba(0,0,0,.9);border-bottom:1px solid rgba(0,200,255,.2);
+  display:flex;align-items:center;padding:0 16px;gap:14px;backdrop-filter:blur(12px)}
+.tl{display:flex;align-items:center;gap:8px}
+.ti{width:32px;height:32px;background:linear-gradient(135deg,#00c8ff,#00ff88);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:18px}
+.tt{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:#00c8ff;letter-spacing:2px}
+.ts{font-size:7px;color:#4e7899;letter-spacing:2px;display:block}
+.ph-center{flex:1;text-align:center}
+.phc-t{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#00c8ff;letter-spacing:2px}
+.phc-s{font-size:9px;color:#4e7899;margin-top:2px;letter-spacing:1px}
+.top-r{display:flex;gap:6px;align-items:center}
+.rd{width:10px;height:10px;border-radius:50%;background:#ff2020;opacity:0;animation:bk .8s infinite}
+.cam-b{font-family:'Share Tech Mono',monospace;font-size:9px;color:#ffd700;
+  padding:3px 8px;border:1px solid rgba(255,215,0,.3);border-radius:3px}
+.btn{padding:5px 12px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:11px;
+  font-weight:700;cursor:pointer;border:1px solid;transition:all .2s}
+.btn-g{background:rgba(0,230,118,.1);color:#00e676;border-color:rgba(0,230,118,.3)}
+.btn-g:hover{background:rgba(0,230,118,.25)}
+.btn-b{background:rgba(0,200,255,.08);color:#00c8ff;border-color:rgba(0,200,255,.25)}
+.btn-b:hover{background:rgba(0,200,255,.2)}
+.btn-r{background:rgba(255,32,32,.1);color:#ff6060;border-color:rgba(255,32,32,.3)}
+
+/* EMERGENCY BANNER */
+#emer{position:fixed;top:58px;left:50%;transform:translateX(-50%);
+  background:#ff2020;color:#fff;font-family:'Orbitron',monospace;font-size:11px;font-weight:900;
+  padding:9px 28px;border-radius:5px;z-index:201;display:none;white-space:nowrap;
+  box-shadow:0 4px 24px rgba(255,32,32,.7);animation:pulse 1s infinite;letter-spacing:1.5px}
+#emer.on{display:block}
+
+/* IMPACT EFFECT */
+#impact{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:90px;z-index:300;display:none;pointer-events:none}
+#impact.on{display:block;animation:pop .3s ease}
+
+/* LEFT PANEL */
+#LP{position:fixed;top:60px;left:12px;width:215px;z-index:100;display:flex;flex-direction:column;gap:7px}
+.box{background:rgba(0,0,0,.88);border:1px solid rgba(0,200,255,.15);border-radius:8px;
+  padding:10px 12px;backdrop-filter:blur(12px)}
+.bh{font-family:'Orbitron',monospace;font-size:8px;color:#4e7899;letter-spacing:2px;
+  margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.bd{width:5px;height:5px;border-radius:50%}
+
+/* Vehicle rows */
+.vi{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(0,200,255,.06)}
+.vi:last-child{border-bottom:none}
+.vid{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.vip{font-family:'Share Tech Mono',monospace;font-size:8px;color:#b8d8f0;flex:1}
+.vis{font-family:'Share Tech Mono',monospace;font-size:9px}
+.vib{font-size:7px;padding:1px 5px;border-radius:2px}
+
+/* Phase list */
+.pr{display:flex;align-items:center;gap:6px;padding:3px 0}
+.prn{font-family:'Share Tech Mono',monospace;font-size:8px;color:#4e7899;width:14px}
+.prb{flex:1;height:3px;background:rgba(0,200,255,.1);border-radius:2px;overflow:hidden}
+.prf{height:100%;border-radius:2px;transition:width .3s}
+.prl{font-size:8px;color:#4e7899;width:74px;text-align:right}
+.pr.act .prl{color:#00c8ff}.pr.dn .prl{color:#00e676}
+
+/* RIGHT PANEL */
+#RP{position:fixed;top:60px;right:12px;width:252px;z-index:100}
+.acard{background:rgba(0,0,0,.9);border:1px solid;border-left-width:4px;border-radius:6px;
+  padding:8px 10px;margin-bottom:6px;animation:slideR .35s ease;backdrop-filter:blur(10px)}
+.acard.acc{border-color:rgba(255,32,32,.3);border-left-color:#ff2020;background:rgba(255,32,32,.06)}
+.acard.warn{border-color:rgba(255,140,0,.25);border-left-color:#ff8c00}
+.acard.info{border-color:rgba(0,200,255,.22);border-left-color:#00c8ff}
+.acard.grn{border-color:rgba(0,230,118,.22);border-left-color:#00e676;background:rgba(0,255,136,.04)}
+.acard.corr{border-color:rgba(0,255,136,.28);border-left-color:#00ff88;background:rgba(0,255,136,.07)}
+.at{font-family:'Share Tech Mono',monospace;font-size:7px;color:#4e7899}
+.atit{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;margin:2px 0}
+.acc .atit{color:#ff2020}.warn .atit{color:#ff8c00}.info .atit{color:#00c8ff}
+.grn .atit{color:#00e676}.corr .atit{color:#00ff88}
+.amsg{font-size:9px;color:#b8d8f0;line-height:1.4}
+
+/* VOICE WIDGET */
+#vw{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.94);border:1px solid rgba(255,32,32,.4);border-radius:10px;
+  padding:10px 18px;z-index:200;display:none;min-width:360px;max-width:620px;
+  text-align:center;backdrop-filter:blur(14px);box-shadow:0 4px 24px rgba(255,32,32,.2)}
+#vw.on{display:block;animation:pop .3s ease}
+.vwi{font-size:24px;margin-bottom:4px}
+.vwl{font-family:'Orbitron',monospace;font-size:8px;color:#ff2020;letter-spacing:2px;margin-bottom:4px}
+.vwt{font-size:11px;color:#b8d8f0;line-height:1.55}
+.vwb{display:flex;align-items:flex-end;justify-content:center;gap:3px;margin-top:8px;height:22px}
+.vbb{width:4px;background:#ff2020;border-radius:2px}
+
+/* NARRATION */
+#nar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.95);border:1px solid rgba(0,200,255,.25);border-top:2.5px solid #00c8ff;
+  border-radius:6px;padding:9px 22px;z-index:200;min-width:440px;max-width:720px;
+  text-align:center;backdrop-filter:blur(14px);transition:border-top-color .4s}
+#nar.d{border-top-color:#ff2020}#nar.g{border-top-color:#00e676}#nar.w{border-top-color:#ff8c00}
+.nt{font-family:'Orbitron',monospace;font-size:9px;color:#00c8ff;letter-spacing:2px;margin-bottom:3px}
+#nar.d .nt{color:#ff2020}#nar.g .nt{color:#00e676}#nar.w .nt{color:#ff8c00}
+.nx{font-size:11px;color:#b8d8f0;line-height:1.6}
+
+/* CAM LABEL */
+#camLbl{position:fixed;top:60px;left:50%;transform:translateX(-50%);
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,215,0,.7);
+  letter-spacing:2px;z-index:199;pointer-events:none}
+
+/* PROGRESS */
+#prog{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(0,200,255,.1);z-index:200}
+#pf{height:100%;background:linear-gradient(90deg,#00c8ff,#00ff88);width:0%;transition:width .12s}
+
+/* STATS */
+.stgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.stc{background:rgba(0,200,255,.05);border-radius:4px;padding:6px;text-align:center}
+.stn{font-family:'Orbitron',monospace;font-size:15px;font-weight:700}
+.stl{font-size:7px;color:#4e7899;margin-top:2px}
+
+/* REPLAY */
+#replay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  backdrop-filter:blur(12px)}
+.rt{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#00ff88;letter-spacing:3px}
+.rg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:560px;width:90%}
+.rc{background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;padding:14px;text-align:center}
+.rn{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#00c8ff}
+.rl{font-size:9px;color:#4e7899;margin-top:4px;letter-spacing:1px}
+.rn.r{color:#ff2020}.rn.g{color:#00e676}.rn.a{color:#ff8c00}.rn.y{color:#ffd700}
+.rbtns{display:flex;gap:10px}
+.rbtn{padding:12px 28px;border-radius:6px;font-family:'Orbitron',monospace;font-size:11px;
+  font-weight:700;cursor:pointer;background:rgba(0,200,255,.1);color:#00c8ff;
+  border:1px solid rgba(0,200,255,.3);transition:all .2s}
+.rbtn:hover{background:rgba(0,200,255,.22)}
+</style>
+</head>
+<body>
+<div class="scan"></div>
+<div id="redFlash"></div>
+<div id="sirenBorder"></div>
+<canvas id="c"></canvas>
+<div id="impact">💥</div>
+
+<!-- TOP BAR -->
+<div id="top">
+  <div class="tl"><div class="ti">🏔</div><div><span class="tt">HILLSAFE AI</span><span class="ts">4D HD INCIDENT SIMULATION · BANIHAL PASS · J&K INDIA</span></div></div>
+  <div class="ph-center"><div class="phc-t" id="phT">SYSTEM READY</div><div class="phc-s" id="phS">Press ▶ Play to start cinematic simulation</div></div>
+  <div class="top-r">
+    <div class="rd" id="rd"></div>
+    <div class="cam-b" id="camB">CAM: OVERVIEW</div>
+    <button class="btn btn-g" onclick="play()">▶ Play</button>
+    <button class="btn btn-b" onclick="restart()">↺ Restart</button>
+    <button class="btn btn-r" onclick="window.close()">✕ Close</button>
+  </div>
+</div>
+
+<div id="camLbl">● REC · OVERVIEW CAMERA</div>
+<div id="emer">🚨 ACCIDENT DETECTED — BANIHAL PASS — EMERGENCY RESPONSE ACTIVATED</div>
+
+<!-- LEFT PANEL -->
+<div id="LP">
+  <div class="box">
+    <div class="bh"><div class="bd" style="background:#ff2020;box-shadow:0 0 4px #ff2020"></div>🚗 VEHICLE STATUS</div>
+    <div id="vList"></div>
+  </div>
+  <div class="box">
+    <div class="bh"><div class="bd" style="background:#00c8ff"></div>⏱ PHASES</div>
+    <div id="phList"></div>
+  </div>
+  <div class="box">
+    <div class="bh" style="justify-content:center"><div class="bd" style="background:#00e676"></div>📊 RESPONSE</div>
+    <div style="text-align:center;font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:#00e676" id="rtime">0s</div>
+    <div style="font-size:9px;color:#4e7899;text-align:center;margin-bottom:8px">ELAPSED TIME</div>
+    <div class="stgrid">
+      <div class="stc"><div class="stn" style="color:#ff2020" id="s-acc">0</div><div class="stl">ACCIDENTS</div></div>
+      <div class="stc"><div class="stn" style="color:#00e676" id="s-al">0</div><div class="stl">ALERTED</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="RP">
+  <div class="bh" style="padding:0 4px 6px"><div class="bd" style="background:#ff2020;box-shadow:0 0 4px #ff2020"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#4e7899;letter-spacing:2px">⚡ LIVE ALERT LOG</span></div>
+  <div id="alog"></div>
+</div>
+
+<!-- VOICE WIDGET -->
+<div id="vw">
+  <div class="vwi" id="vwi">🔊</div>
+  <div class="vwl">🎙 HINDI VOICE ALERT</div>
+  <div class="vwt" id="vwt">Alert text here</div>
+  <div class="vwb">
+    <div class="vbb" style="height:6px;animation:wave .3s infinite"></div>
+    <div class="vbb" style="height:14px;animation:wave .5s infinite .1s"></div>
+    <div class="vbb" style="height:20px;animation:wave .4s infinite .2s"></div>
+    <div class="vbb" style="height:16px;animation:wave .35s infinite .05s"></div>
+    <div class="vbb" style="height:22px;animation:wave .6s infinite .15s"></div>
+    <div class="vbb" style="height:10px;animation:wave .45s infinite .25s"></div>
+    <div class="vbb" style="height:18px;animation:wave .5s infinite .1s"></div>
+    <div class="vbb" style="height:12px;animation:wave .38s infinite .2s"></div>
+    <div class="vbb" style="height:8px;animation:wave .42s infinite .08s"></div>
+    <div class="vbb" style="height:16px;animation:wave .55s infinite .18s"></div>
+  </div>
+</div>
+
+<!-- NARRATION -->
+<div id="nar">
+  <div class="nt" id="nT">HILLSAFE AI · 4D HD SIMULATION</div>
+  <div class="nx" id="nX">Press ▶ Play. Auto-playing cinematic accident on Banihal Pass. Multiple camera angles. Real Hindi voice alerts when collision occurs.</div>
+</div>
+
+<!-- REPLAY -->
+<div id="replay">
+  <div class="rt">🏁 SIMULATION COMPLETE</div>
+  <div class="rg">
+    <div class="rc"><div class="rn a">11 min</div><div class="rl">RESPONSE TIME</div></div>
+    <div class="rc"><div class="rn g">23 min</div><div class="rl">TIME SAVED</div></div>
+    <div class="rc"><div class="rn r">1</div><div class="rl">ACCIDENTS</div></div>
+    <div class="rc"><div class="rn g">5</div><div class="rl">ALERTED</div></div>
+    <div class="rc"><div class="rn y">₹3,000</div><div class="rl">AUTO CHALLAN</div></div>
+    <div class="rc"><div class="rn g">1</div><div class="rl">LIFE SAVED</div></div>
+  </div>
+  <div class="rbtns">
+    <button class="rbtn" onclick="restart()">↺ Watch Again</button>
+    <button class="rbtn btn-r" style="color:#ff6060;border-color:rgba(255,32,32,.3)" onclick="window.close()">✕ Close</button>
+  </div>
+</div>
+
+<div id="prog"><div id="pf"></div></div>
+
+<script>
+// ── THREE.JS SETUP ────────────────────────────────────────────
+const canvas=document.getElementById('c');
+let W=innerWidth,H=innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(W,H);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.3;
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x0a1520,.014);
+scene.background=new THREE.Color(0x060d18);
+const cam=new THREE.PerspectiveCamera(60,W/H,.1,600);
+cam.position.set(-20,20,48);cam.lookAt(0,5,0);
+window.addEventListener('resize',()=>{W=innerWidth;H=innerHeight;
+  renderer.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();});
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x203050,1.2));
+const sun=new THREE.DirectionalLight(0xffe8c0,2.5);
+sun.position.set(60,90,40);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.far=300;
+sun.shadow.camera.left=sun.shadow.camera.bottom=-130;
+sun.shadow.camera.right=sun.shadow.camera.top=130;
+sun.shadow.bias=-.001;scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x2060a0,0x1a3020,.8));
+const hl1=new THREE.PointLight(0xffffcc,0,40);
+const hl2=new THREE.PointLight(0xffffcc,0,40);
+scene.add(hl1,hl2);
+
+// ── ROAD PATH ─────────────────────────────────────────────────
+const ROAD=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-100,0,25),new THREE.Vector3(-75,1,14),
+  new THREE.Vector3(-55,3,5), new THREE.Vector3(-35,6,-5),
+  new THREE.Vector3(-18,10,-15),new THREE.Vector3(-5,13,-23),
+  new THREE.Vector3(5,15,-29),  // BANIHAL PASS ACCIDENT HERE
+  new THREE.Vector3(15,16,-24),new THREE.Vector3(26,16,-14),
+  new THREE.Vector3(43,15,-4), new THREE.Vector3(60,13,8),
+  new THREE.Vector3(80,10,18), new THREE.Vector3(100,6,24),
+]);
+const ACC_T=0.44;
+
+// ── BUILD WORLD ───────────────────────────────────────────────
+function buildWorld(){
+  // Ground
+  const gG=new THREE.PlaneGeometry(480,480,90,90);gG.rotateX(-Math.PI/2);
+  const gP=gG.attributes.position,rPts=ROAD.getPoints(60);
+  for(let i=0;i<gP.count;i++){
+    const x=gP.getX(i),z=gP.getZ(i);
+    let h=Math.sin(x/22)*3.5+Math.cos(z/20)*2.5;
+    let md=999;rPts.forEach(p=>md=Math.min(md,Math.hypot(x-p.x,z-p.z)));
+    if(md<8)h=0;else if(md<16)h*=(md-8)/8;gP.setY(i,h);
+  }
+  gG.computeVertexNormals();
+  const gnd=new THREE.Mesh(gG,new THREE.MeshLambertMaterial({color:0x2d4a1e}));
+  gnd.receiveShadow=true;scene.add(gnd);
+
+  // Mountains
+  [[-70,0,-75,38,62],[-15,0,-88,44,72],[35,0,-75,32,54],[90,0,-55,28,46],
+   [-110,0,-15,30,50],[85,0,38,26,42],[-50,0,65,22,38],[15,0,-105,46,75]
+  ].forEach(([x,y,z,r,h])=>{
+    const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,9),new THREE.MeshLambertMaterial({color:0x1a2e1a}));
+    m.position.set(x,y,z);m.castShadow=true;scene.add(m);
+    const sn=new THREE.Mesh(new THREE.ConeGeometry(r*.22,h*.2,8),new THREE.MeshLambertMaterial({color:0xc8d8e8}));
+    sn.position.set(x,y+h*.43,z);scene.add(sn);
+  });
+
+  // Road
+  const pts=ROAD.getPoints(180);
+  const rM=new THREE.MeshLambertMaterial({color:0x222a30});
+  const lM=new THREE.MeshLambertMaterial({color:0xffcc00});
+  const gM=new THREE.MeshLambertMaterial({color:0xaaaaaa});
+  for(let i=0;i<pts.length-1;i++){
+    const p1=pts[i],p2=pts[i+1],len=p1.distanceTo(p2);
+    const dir=new THREE.Vector3().subVectors(p2,p1).normalize();
+    const mid=new THREE.Vector3().addVectors(p1,p2).multiplyScalar(.5);
+    const rs=new THREE.Mesh(new THREE.BoxGeometry(8,.18,len+.1),rM);
+    rs.position.copy(mid);rs.position.y+=.09;rs.lookAt(mid.clone().add(dir));rs.rotateX(-Math.PI/2);
+    rs.receiveShadow=true;scene.add(rs);
+    if(i%4===0){const dl=new THREE.Mesh(new THREE.BoxGeometry(.18,.22,len*.45),lM);
+      dl.position.copy(mid);dl.position.y+=.2;dl.lookAt(mid.clone().add(dir));dl.rotateX(-Math.PI/2);scene.add(dl);}
+    [-4.2,4.2].forEach(s=>{
+      const off=new THREE.Vector3(-dir.z,0,dir.x).multiplyScalar(s);
+      const gr=new THREE.Mesh(new THREE.BoxGeometry(.1,.9,len+.1),gM);
+      gr.position.copy(mid.clone().add(off));gr.position.y+=.55;
+      gr.lookAt(mid.clone().add(off).add(dir));gr.rotateX(-Math.PI/2);scene.add(gr);
+      if(i%4===0){const po=new THREE.Mesh(new THREE.BoxGeometry(.15,1,.15),gM);
+        po.position.copy(mid.clone().add(off));po.position.y+=.5;scene.add(po);}
+    });
+  }
+
+  // Trees
+  [[-45,0,9],[-32,3,5],[-18,7,-18],[2,13,-32],[20,16,-22],[38,15,-10],
+   [55,13,-28],[72,11,-20],[90,8,-12],[108,4,5],[-52,0,20],[-28,2,18],
+   [12,12,-38],[42,15,4],[68,12,-32],[95,6,-15],[-60,0,8],[25,14,-32]
+  ].forEach(([x,y,z])=>{
+    const h=3+Math.random()*4;
+    const t=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,h*.4,7),new THREE.MeshLambertMaterial({color:0x3d2a1a}));
+    t.position.set(x,y+h*.2,z);t.castShadow=true;scene.add(t);
+    const top=new THREE.Mesh(new THREE.ConeGeometry(1.2+Math.random()*.8,h*.75,9),new THREE.MeshLambertMaterial({color:0x1a4a1a}));
+    top.position.set(x,y+h*.6,z);top.castShadow=true;scene.add(top);
+  });
+
+  // Rocks
+  for(let i=0;i<18;i++){
+    const rk=new THREE.Mesh(new THREE.DodecahedronGeometry(.8+Math.random()*1.4),new THREE.MeshLambertMaterial({color:0x4a3d2a}));
+    rk.position.set((Math.random()-.5)*160+10,Math.random()*.5+.5,(Math.random()-.5)*50-5);
+    rk.rotation.set(Math.random(),Math.random(),Math.random());rk.castShadow=true;scene.add(rk);
+  }
+
+  // Danger zone ring
+  const dp=ROAD.getPoint(ACC_T);
+  const dG=new THREE.RingGeometry(4.5,5.8,32);dG.rotateX(-Math.PI/2);
+  const dz=new THREE.Mesh(dG,new THREE.MeshBasicMaterial({color:0xff2020,opacity:.35,transparent:true,side:THREE.DoubleSide}));
+  dz.position.copy(dp);dz.position.y+=.3;scene.add(dz);
+}
+
+// ── VEHICLES ─────────────────────────────────────────────────
+function makeVeh(type,color){
+  const g=new THREE.Group();
+  const M=c=>new THREE.MeshLambertMaterial({color:c});
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  if(type==='bus'){
+    const b=new THREE.Mesh(B(5,2,2.4),M(color));b.position.y=1.2;g.add(b);
+    const r=new THREE.Mesh(B(4.6,.35,2.1),M(color));r.position.set(0,2.37,0);g.add(r);
+  } else if(type==='truck'){
+    const b=new THREE.Mesh(B(6,1.8,2.4),M(color));b.position.y=1.1;g.add(b);
+    const r=new THREE.Mesh(B(1.8,1.5,2),M(0x444));r.position.set(2.8,2.4,0);g.add(r);
+  } else if(type==='ambu'){
+    const b=new THREE.Mesh(B(4.2,1.8,2.1),M(0xffffff));b.position.y=1.1;g.add(b);
+    const cr=new THREE.Mesh(B(.2,1,.1),M(0xff0000));cr.position.set(-.5,1.5,1.06);g.add(cr);
+    const ch=new THREE.Mesh(B(.7,.25,.1),M(0xff0000));ch.position.set(-.5,1.5,1.06);g.add(ch);
+    const sl=new THREE.Mesh(B(1.5,.3,.6),new THREE.MeshLambertMaterial({color:0x0044ff,emissive:0x0011aa,emissiveIntensity:.6}));
+    sl.position.set(-.3,2.3,0);g.add(sl);
+  } else {
+    const b=new THREE.Mesh(B(3.4,1.3,1.9),M(color));b.position.y=.85;g.add(b);
+    const r=new THREE.Mesh(B(2.2,.8,1.7),M(color));r.position.set(-.1,1.7,0);g.add(r);
+  }
+  const wG=new THREE.CylinderGeometry(.42,.42,.35,14);wG.rotateZ(Math.PI/2);
+  const wM=new THREE.MeshLambertMaterial({color:0x111111});
+  [[-1.3,.42,1],[1.3,.42,1],[-1.3,.42,-1],[1.3,.42,-1]].forEach(([x,y,z])=>{
+    const w=new THREE.Mesh(wG,wM);w.position.set(x,y,z);g.add(w);
+  });
+  g.castShadow=true;return g;
+}
+
+const VDATA=[
+  {id:'VH-001',type:'car',  col:0x00e676,t:.07,spd:42,name:'Rajinder Kumar',blood:'B+'},
+  {id:'VH-002',type:'bus',  col:0xff5020,t:.18,spd:72,name:'Mohammed Iqbal', blood:'O+',isAcc:true},
+  {id:'VH-003',type:'car',  col:0x4fc3f7,t:.32,spd:44,name:'Arjun Sharma',  blood:'A+'},
+  {id:'VH-004',type:'truck',col:0xa855f7, t:.52,spd:36,name:'Abdul Rashid',  blood:'O-'},
+  {id:'VH-005',type:'car',  col:0xffd700, t:.66,spd:48,name:'Priya Singh',   blood:'B-'},
+  {id:'VH-006',type:'ambu', col:0xffffff, t:.01,spd:0, name:'SMHS Ambu',    blood:'N/A',hidden:true},
+];
+let vehs=[];
+function buildVehs(){
+  vehs.forEach(v=>scene.remove(v.g));vehs=[];
+  VDATA.forEach(d=>{
+    const g=makeVeh(d.type,d.col);
+    if(d.hidden)g.visible=false;
+    const pt=ROAD.getPoint(d.t);g.position.copy(pt);g.position.y+=.8;
+    scene.add(g);
+    vehs.push({...d,g,tp:d.t,crashed:false,pulled:false,pp:0,brake:false,sa:d.spd,afl:0});
+  });
+}
+
+// ── PARTICLES ─────────────────────────────────────────────────
+let pars=[];
+function explode(pos,n=45){
+  for(let i=0;i<n;i++){
+    const geo=new THREE.SphereGeometry(.18+Math.random()*.4,6,6);
+    const col=i<n*.4?0xff2020:i<n*.7?0xff8800:0xffff00;
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col}));
+    m.position.copy(pos);
+    const a=Math.random()*Math.PI*2,sp=.6+Math.random()*2.8;
+    pars.push({mesh:m,vel:new THREE.Vector3(Math.cos(a)*sp,Math.random()*3+.5,Math.sin(a)*sp),life:1,dec:.022+Math.random()*.025});
+    scene.add(m);
+  }
+  // Debris
+  for(let i=0;i<14;i++){
+    const m=new THREE.Mesh(
+      new THREE.BoxGeometry(.3+Math.random()*.6,.2+Math.random()*.4,.3+Math.random()*.5),
+      new THREE.MeshLambertMaterial({color:0x555555}));
+    m.position.copy(pos).add(new THREE.Vector3((Math.random()-.5)*4,Math.random()*3,(Math.random()-.5)*4));
+    const sp=.4+Math.random();
+    pars.push({mesh:m,vel:new THREE.Vector3((Math.random()-.5)*sp,sp*1.6,(Math.random()-.5)*sp),life:2,dec:.025});
+    scene.add(m);
+  }
+  // Fire
+  for(let i=0;i<8;i++){
+    const m=new THREE.Mesh(
+      new THREE.BoxGeometry(1+Math.random(),1+Math.random(),1+Math.random()),
+      new THREE.MeshBasicMaterial({color:i<4?0xff4400:0xff8800,transparent:true,opacity:.8}));
+    m.position.copy(pos).add(new THREE.Vector3((Math.random()-.5)*3,Math.random()*2,(Math.random()-.5)*3));
+    pars.push({mesh:m,vel:new THREE.Vector3(0,.06,0),life:1.5,dec:.045});
+    scene.add(m);
+  }
+}
+function updPars(){
+  for(let i=pars.length-1;i>=0;i--){
+    const p=pars[i];
+    p.mesh.position.add(p.vel);p.vel.y-=.04;
+    if(p.mesh.material.transparent)p.mesh.material.opacity=p.life*.8;
+    p.life-=p.dec;if(p.life<=0){scene.remove(p.mesh);pars.splice(i,1);}
+  }
+}
+
+// ── CAMERA ───────────────────────────────────────────────────
+const CAMS={
+  overview :{pos:new THREE.Vector3(-20,22,50), look:new THREE.Vector3(5,5,0)},
+  accident :{pos:new THREE.Vector3(8,14,-8),   look:new THREE.Vector3(5,14,-29)},
+  impact   :{pos:new THREE.Vector3(2,20,-18),  look:new THREE.Vector3(5,14,-28)},
+  ambulance:{pos:new THREE.Vector3(-18,12,10), look:new THREE.Vector3(5,5,0)},
+  bird     :{pos:new THREE.Vector3(5,58,-14),  look:new THREE.Vector3(5,13,-28)},
+  side     :{pos:new THREE.Vector3(-32,16,-24),look:new THREE.Vector3(5,14,-28)},
+  corridor :{pos:new THREE.Vector3(-4,20,22),  look:new THREE.Vector3(22,10,-4)},
+};
+let camTgt={pos:CAMS.overview.pos.clone(),look:CAMS.overview.look.clone()};
+let camCur={pos:cam.position.clone()};
+const lookV=new THREE.Vector3(5,5,0);
+function setCam(name){
+  const c=CAMS[name];if(!c)return;
+  camTgt.pos.copy(c.pos);camTgt.look.copy(c.look);
+  document.getElementById('camLbl').textContent=`● REC · ${name.toUpperCase()} CAMERA`;
+  document.getElementById('camB').textContent=`CAM: ${name.toUpperCase()}`;
+}
+
+// ── VOICE ────────────────────────────────────────────────────
+let vt=null;
+function speak(text,icon='🔊',rate=.82){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='en-IN';u.rate=rate;u.pitch=1.1;u.volume=1;
+  const vs=speechSynthesis.getVoices();
+  const v=vs.find(x=>x.lang.startsWith('en-IN'))||null;
+  setTimeout(()=>{if(v)u.voice=v;speechSynthesis.speak(u);},80);
+  document.getElementById('vwi').textContent=icon;
+  document.getElementById('vwt').textContent=text;
+  const vw=document.getElementById('vw');vw.classList.add('on');
+  if(vt)clearTimeout(vt);
+  vt=setTimeout(()=>vw.classList.remove('on'),Math.max(5000,text.length*95));
+}
+
+const V={
+  normal   :'Banihal Pass mountain highway. Six vehicles moving on NH-44. HillSafe AI monitoring all danger zones. Fog detected — danger multiplier two point zero active.',
+  warning  :'Khatre ki chetavni! Khatre ki chetavni! Vaahan JK-02-B-5567 Banihal Pass mein 72 kilometre ki raftaar se jaa raha hai! 20 zone mein! Turant raftaar kam karo!',
+  ecu      :'Dhyan do! HillSafe AI ka ECU gati niyantran sakriya. Vaahan ki raftaar 72 se 30 kilometre tak kam ki jaa rahi hai. OBD-II command bheji gayi.',
+  brake    :'Khatara! Khatara! Vaahan JK-02 ke brake fail ho rahe hain! Sabhi paas ke vaahan turant baeen taraf hato! Rasta khali karo! Yeh aapatkaal hai!',
+  impact   :'Aapatkaal! Aapatkaal! Banihal Pass par bhayankar durghatna! Vaahan JK-02-B-5567 durghatnagrast! Mohammed Iqbal ko tatkal sahayata chahiye! Rakt samuh O positive! Ambulance ravana ho rahi hai!',
+  nearby   :'Khatre ki suchana! Paas ke sabhi vaahan! Banihal Pass par durghatna hui hai! Raftaar kam karo aur surakshit doori rakho! Rasta band kiya ja raha hai!',
+  cascade  :'Suchana! Vaahan JK-02-B-5567 ke brake fail! Yeh suchana 0.5 second mein paas ke 4 vaahano tak pahunchi! Yatayat niyantran alerted!',
+  challan  :'Chalaan! Vaahan JK-02-B-5567 par 30 kilometre zone mein 72 kilometre ki raftaar ke liye 3000 rupaye ka digital chalaan jaari kiya gaya! MySQL database mein save kiya gaya!',
+  corridor :'Sabhi vaahan chalakon ko tatkal suchana! Hariyal galiyaara sakriya! SMHS Srinagar se ambulance aa rahi hai! Turant baeen taraf hato aur ruko!',
+  ambu     :'Ambulance ravana ho gayi hai! SMHS Shrinagar se! Raasta saaf hai! 68 kilometre ki raftaar se! 11 minute mein pahunchenge!',
+  hospital :'SMHS aspatal ko suchit kiya gaya! Rakt samuh O positive taiyar! Trauma bay khali! Surgeon taiyaar! ETA 3 minute!',
+  complete :'Mission poora! Mariij 11 minute mein aspatal pahuncha! Rashtriya ausat 34 minute. HillSafe AI ne 23 minute bachaye! Ek jeevan bach gaya!',
+};
+
+// ── ALERTS ───────────────────────────────────────────────────
+let alCount=0;
+function addAlert(cls,title,msg){
+  alCount++;document.getElementById('s-al').textContent=alCount;
+  const log=document.getElementById('alog');
+  const el=document.createElement('div');el.className=`acard ${cls}`;
+  el.innerHTML=`<div class="at">${new Date().toLocaleTimeString()}</div>
+    <div class="atit">${title}</div><div class="amsg">${msg}</div>`;
+  log.insertBefore(el,log.firstChild);
+  while(log.children.length>8)log.removeChild(log.lastChild);
+}
+
+// ── PHASE UI ─────────────────────────────────────────────────
+const PDEF=[
+  {l:'Normal Traffic',c:'#00e676'},{l:'Speed Warning',c:'#ff8c00'},
+  {l:'ECU Lock',c:'#ffd700'},     {l:'Brake Failure',c:'#ff2020'},
+  {l:'💥 IMPACT',c:'#ff2020'},   {l:'Cascade Alert',c:'#ff8c00'},
+  {l:'Green Corridor',c:'#00e676'},{l:'Ambulance Race',c:'#00c8ff'},
+  {l:'Mission Done',c:'#00ff88'},
+];
+function updatePhUI(cur,pct){
+  document.getElementById('phList').innerHTML=PDEF.map((p,i)=>{
+    const done=i<cur,active=i===cur;
+    const fill=active?Math.round(pct*100):done?100:0;
+    const cls=active?'pr act':done?'pr dn':'pr';
+    return`<div class="${cls}">
+      <div class="prn">${i+1}</div>
+      <div class="prb"><div class="prf" style="width:${fill}%;background:${p.c}"></div></div>
+      <div class="prl">${p.l}</div></div>`;
+  }).join('');
+}
+function updateVehUI(){
+  document.getElementById('vList').innerHTML=
+    vehs.filter(v=>v.id!=='VH-006'||!v.hidden).map(v=>{
+      const col=v.crashed?'#ff2020':v.pulled?'#ffd700':v.brake?'#ff8c00':'#00e676';
+      const st=v.crashed?'CRASH':v.pulled?'PULLED':v.brake?'BRAKING':'MOVING';
+      return`<div class="vi">
+        <div class="vid" style="background:${col};box-shadow:0 0 4px ${col}88"></div>
+        <div class="vip">${v.id}</div>
+        <div class="vis" style="color:${col}">${Math.round(v.sa)}km/h</div>
+        <div class="vib" style="background:${col}22;color:${col}">${st}</div>
+      </div>`;
+    }).join('');
+}
+
+// ── NARRATION ────────────────────────────────────────────────
+function setNar(title,text,cls=''){
+  const n=document.getElementById('nar');
+  n.className=cls?'nar '+cls:'';
+  document.getElementById('nT').textContent=title;
+  document.getElementById('nX').textContent=text;
+}
+
+// ── SIMULATION ────────────────────────────────────────────────
+let running=false,st=0,phase=0,shake=0;
+let corridorGlow=0,fogLvl=0,totalTime=0;
+const TOTAL=44;const done={};
+const k=s=>!done[s],m=s=>{done[s]=true;};
+
+function setPhTitle(t,s){document.getElementById('phT').textContent=t;document.getElementById('phS').textContent=s;}
+
+function frame(t,dt){
+  document.getElementById('pf').style.width=(t/TOTAL*100)+'%';
+  document.getElementById('rtime').textContent=Math.round(t)+'s';
+  totalTime=t;
+
+  // ── P0 Normal (0-5s)
+  if(t<5){
+    phase=0;updatePhUI(0,t/5);
+    if(k('p0')){m('p0');
+      setCam('overview');
+      setPhTitle('PHASE 1 — NORMAL MOUNTAIN TRAFFIC','HillSafe AI monitoring · Fog detected · Danger ×2.0');
+      setNar('PHASE 1 — NORMAL MOUNTAIN TRAFFIC','6 vehicles on NH-44 Banihal Pass. HillSafe AI monitoring all 8 danger zones. Open-Meteo: fog detected, danger multiplier ×2.0 active.');
+      speak(V.normal,'🏔',.84);document.getElementById('rd').style.opacity='1';
+      addAlert('info','🏔 MONITORING ACTIVE','All 6 vehicles tracked · Banihal fog ×2.0 · AI scores live');
+    }
+    vehs.forEach(v=>{if(!v.crashed&&!v.hidden){v.tp+=v.spd/3600*dt*.8;if(v.tp>1)v.tp-=1;v.sa=v.spd;}});
+    fogLvl=Math.min(1,fogLvl+dt*.15);
+    scene.fog=new THREE.Fog(0x8899aa,35+fogLvl*20,85+fogLvl*35);
+  }
+
+  // ── P1 Speed Warning (5-8.5s)
+  else if(t<8.5){
+    phase=1;updatePhUI(1,(t-5)/3.5);
+    if(k('p1')){m('p1');
+      setCam('accident');
+      setPhTitle('PHASE 2 — ⚠️ CRITICAL OVERSPEED','VH-002 at 72 km/h · Fog zone · AI: 0.87 CRITICAL');
+      setNar('PHASE 2 — CRITICAL OVERSPEED DETECTED','Bus VH-002 doing 72 km/h in 20 km/h fog zone at Banihal Pass! AI danger score: 0.87 CRITICAL. ECU lock command sending!','w');
+      speak(V.warning,'⚠️',.78);
+      addAlert('warn','⚠️ OVERSPEED — VH-002','72 km/h in 20 km/h fog zone · AI score: 0.87 CRITICAL');
+    }
+    vehs.forEach(v=>{if(!v.crashed&&!v.hidden){
+      v.tp+=v.spd/3600*dt*(v.isAcc?1.9:.8);if(v.tp>1)v.tp-=1;
+      v.sa=v.isAcc?Math.min(78,v.sa+dt*10):v.spd;
+    }});
+  }
+
+  // ── P2 ECU Lock (8.5-11s)
+  else if(t<11){
+    phase=2;updatePhUI(2,(t-8.5)/2.5);
+    if(k('p2')){m('p2');
+      setPhTitle('PHASE 3 — ⚙️ ECU REMOTE LOCK','Server forcing speed: 72 → 30 km/h via OBD-II');
+      setNar('PHASE 3 — ECU SPEED LOCK ACTIVATED','Server sending remote ECU command. Bus speed FORCING DOWN: 72→30 km/h via OBD-II. But brake anomaly detected!','w');
+      speak(V.ecu,'⚙️',.82);
+      addAlert('warn','⚙️ ECU LOCK SENT','VH-002 → Force 72→30 km/h · OBD-II command · Brake anomaly!');
+      hl1.intensity=1;hl2.intensity=1;
+    }
+    const bus=vehs.find(v=>v.isAcc);
+    if(bus){bus.sa=Math.max(60,78-((t-8.5)*9));}
+    vehs.forEach(v=>{if(!v.crashed&&!v.hidden&&!v.isAcc){v.tp+=v.spd/3600*dt*.8;if(v.tp>1)v.tp-=1;}});
+  }
+
+  // ── P3 Brake Failure (11-13s)
+  else if(t<13){
+    phase=3;updatePhUI(3,(t-11)/2);
+    if(k('p3')){m('p3');
+      setCam('side');
+      setPhTitle('PHASE 4 — 🚨 BRAKE FAILURE!','G-Force anomaly! Cascade alert in <0.5s!');
+      setNar('PHASE 4 — BRAKE FAILURE + CASCADE ALERT','G-Force sensor anomaly! Brake pressure ZERO! HillSafe AI fires cascade alert to ALL 4 nearby vehicles in under 0.5 seconds!','d');
+      speak(V.brake,'🚨',.75);
+      addAlert('acc','🚨 BRAKE FAILURE — VH-002','G-Force anomaly · Brake pressure 0% · Cascade firing!');
+      document.getElementById('sirenBorder').classList.add('on');
+      setTimeout(()=>{speak(V.cascade,'⚡',.80);addAlert('acc','⚡ CASCADE ALERT','4 vehicles alerted in <0.5 seconds! Traffic control notified!');},2000);
+      setTimeout(()=>{speak(V.nearby,'📡',.80);},4500);
+      vehs.filter(v=>!v.isAcc&&!v.hidden).forEach(v=>{v.brake=true;v.afl=3;});
+    }
+    const bus=vehs.find(v=>v.isAcc);
+    if(bus){bus.sa=Math.min(82,bus.sa+dt*5);}
+    vehs.forEach(v=>{if(!v.crashed&&!v.hidden){
+      v.tp+=v.spd/3600*dt*(v.isAcc?2.1:v.brake?.25:.8);
+      if(v.tp>1)v.tp-=1;if(v.afl>0)v.afl-=dt;
+    }});
+  }
+
+  // ── P4 IMPACT (13-15.5s)
+  else if(t<15.5){
+    phase=4;updatePhUI(4,(t-13)/2.5);
+    if(k('p4')){m('p4');
+      const bus=vehs.find(v=>v.isAcc);
+      if(bus){
+        bus.crashed=true;bus.sa=0;bus.tp=ACC_T;
+        const pt=ROAD.getPoint(ACC_T);
+        explode(pt);
+        bus.g.rotation.y=Math.PI*.35;bus.g.rotation.z=.16;
+        bus.g.position.copy(pt);bus.g.position.y+=.8;
+      }
+      shake=25;
+      document.getElementById('redFlash').classList.add('on');
+      setTimeout(()=>document.getElementById('redFlash').classList.remove('on'),250);
+      setTimeout(()=>{document.getElementById('redFlash').classList.add('on');
+        setTimeout(()=>document.getElementById('redFlash').classList.remove('on'),150);},400);
+      document.getElementById('impact').classList.add('on');
+      setTimeout(()=>document.getElementById('impact').classList.remove('on'),900);
+      document.getElementById('emer').classList.add('on');
+      setTimeout(()=>document.getElementById('emer').classList.remove('on'),7000);
+      setCam('impact');
+      setPhTitle('💥 PHASE 5 — IMPACT!','JK-02-B-5567 CRASHED · G-Force 8.2G · O+');
+      setNar('💥 PHASE 5 — ACCIDENT DETECTED','Bus JK-02-B-5567 CRASHED at Banihal Pass! G-Force 8.2G. Emergency protocols activated instantly. Ambulance dispatching now!','d');
+      speak(V.impact,'🚨',.73);
+      addAlert('acc','💥 IMPACT — JK-02-B-5567','Mohammed Iqbal · Blood O+ · G-Force 8.2G · 33.5120°N 75.2000°E');
+      document.getElementById('s-acc').textContent='1';
+    }
+    shake*=.8;
+    vehs.filter(v=>!v.crashed&&!v.hidden).forEach(v=>{
+      v.brake=true;v.sa=Math.max(0,v.sa-dt*28);
+      v.tp+=Math.max(0,v.sa)/3600*dt*.4;if(v.tp>1)v.tp-=1;
+    });
+  }
+
+  // ── P5 Challan + Zone block (15.5-19s)
+  else if(t<19){
+    phase=5;updatePhUI(5,(t-15.5)/3.5);
+    if(k('p5')){m('p5');
+      setCam('bird');
+      setPhTitle('PHASE 6 — AUTO CHALLAN + ZONE BLOCK','₹3000 challan issued · NH-44 blocked · Banihal Bypass');
+      setNar('PHASE 6 — AUTO CHALLAN + ZONE BLOCKED','₹3000 challan auto-issued! Zone blocked! Reroute via Banihal Bypass. Traffic control wardens deployed.','w');
+      speak(V.challan,'💸',.82);
+      document.getElementById('sirenBorder').classList.remove('on');
+      addAlert('warn','💸 AUTO CHALLAN ₹3000','JK-02-B-5567 · 72/20 zone · MySQL logged · SMS to driver');
+      addAlert('warn','🚧 ZONE BLOCKED','Banihal Pass closed · Banihal Bypass active · +25 min');
+    }
+    vehs.filter(v=>!v.crashed&&!v.hidden).forEach(v=>{
+      v.sa=Math.max(0,v.sa-dt*10);v.tp+=Math.max(0,v.sa)/3600*dt*.4;if(v.tp>1)v.tp-=1;
+    });
+  }
+
+  // ── P6 Green Corridor (19-24s)
+  else if(t<24){
+    phase=6;updatePhUI(6,(t-19)/5);
+    if(k('p6')){m('p6');
+      corridorGlow=1;setCam('corridor');
+      setPhTitle('PHASE 7 — 🚑 GREEN CORRIDOR','World first! Road cleared BEFORE ambulance departs!');
+      setNar('PHASE 7 — GREEN CORRIDOR ACTIVATED','WORLD FIRST: All 4 vehicles on ambulance route alerted BEFORE ambulance departs! Type-specific instructions sent. Hospital pre-alerted!','g');
+      speak(V.corridor,'🚑',.78);
+      addAlert('corr','🚑 GREEN CORRIDOR ACTIVE','SMHS → Banihal Pass · 4 vehicles pulling aside · ETA 11 min');
+      setTimeout(()=>{speak(V.hospital,'🏥',.82);
+        addAlert('grn','🏥 SMHS PRE-ALERT','Blood O+ ready · Trauma bay open · Surgeon on standby');},3500);
+    }
+    const rate=dt*.016;
+    vehs.filter(v=>!v.crashed&&!v.hidden).forEach(v=>{
+      if(!v.pulled){v.pp=(v.pp||0)+rate;if(v.pp>=1)v.pulled=true;}
+      v.sa=Math.max(0,v.sa-dt*5);
+    });
+    // Dispatch ambulance
+    if(t>22&&k('ambu')){m('ambu');
+      const am=vehs.find(v=>v.id==='VH-006');
+      if(am){am.g.visible=true;am.hidden=false;am.sa=0;am.tp=.01;}
+      addAlert('grn','🚑 AMBULANCE DISPATCHED','SMHS Srinagar · Clear road ahead');
+    }
+  }
+
+  // ── P7 Ambulance Racing (24-36s)
+  else if(t<36){
+    phase=7;updatePhUI(7,(t-24)/12);
+    if(k('p7')){m('p7');
+      setCam('ambulance');hl1.intensity=4;hl2.intensity=4;
+      setPhTitle('PHASE 8 — 🚑 AMBULANCE RACING','68 km/h · Unobstructed · ETA 8 min');
+      setNar('PHASE 8 — AMBULANCE RACING ON CLEAR ROAD','SMHS Srinagar ambulance at 68 km/h on COMPLETELY CLEAR ROAD! Blood O+ ready. ICU reserved. Arriving in 8 minutes!','g');
+      speak(V.ambu,'🚑',.82);
+    }
+    const am=vehs.find(v=>v.id==='VH-006');
+    if(am){am.sa=Math.min(68,(t-24)*6);am.tp=Math.min(ACC_T-.02,am.tp+(am.sa/3600)*dt);}
+    // Siren light blink
+    const amG=vehs.find(v=>v.id==='VH-006');
+    if(amG&&amG.g.visible){
+      const sl=amG.g.children.find(c=>c.material&&c.material.emissive);
+      if(sl){const tb=Date.now()/280;sl.material.color.set(Math.sin(tb)>0?0x0044ff:0xff2020);}
+    }
+  }
+
+  // ── P8 Complete (36-44s)
+  else{
+    phase=8;updatePhUI(8,(t-36)/8);
+    if(k('p8')){m('p8');
+      corridorGlow=0;hl1.intensity=0;hl2.intensity=0;setCam('overview');
+      setPhTitle('✅ PHASE 9 — MISSION COMPLETE','Patient: 11 min · Avg: 34 min · 23 min saved');
+      setNar('✅ MISSION COMPLETE — 11 MINUTES','Patient reached SMHS Srinagar in 11 minutes. National average: 34 minutes. HillSafe AI saved 23 minutes. One life saved.','g');
+      speak(V.complete,'✅',.84);
+      addAlert('grn','✅ MISSION COMPLETE','Response: 11 min · Saved: 23 min · Hospital: SMHS Srinagar');
+      document.getElementById('sirenBorder').classList.remove('on');
+    }
+    if(t>43&&k('end')){m('end');running=false;document.getElementById('replay').style.display='flex';}
+  }
+}
+
+// ── POSITION VEHICLES ─────────────────────────────────────────
+function posVehs(){
+  vehs.forEach(v=>{
+    if(v.id==='VH-006'&&v.hidden)return;
+    if(v.crashed){const pt=ROAD.getPoint(ACC_T);v.g.position.copy(pt);v.g.position.y+=.8;return;}
+    const t=Math.min(.99,Math.max(0,v.tp));
+    const pt=ROAD.getPoint(t);
+    const tg=ROAD.getPoint(Math.min(.99,t+.008));
+    const dir=new THREE.Vector3().subVectors(tg,pt).normalize();
+    let off=new THREE.Vector3();
+    if(v.pp>0){const side=new THREE.Vector3(-dir.z,0,dir.x).multiplyScalar(3.5*Math.min(1,v.pp));off.copy(side);}
+    v.g.position.copy(pt.clone().add(off));v.g.position.y+=.8;
+    if(pt.distanceTo(tg)>.01)v.g.lookAt(tg.clone().add(off).add(new THREE.Vector3(0,.8,0)));
+    if(v.id==='VH-006'){
+      const fwd=dir.clone().multiplyScalar(3);
+      hl1.position.copy(v.g.position.clone().add(fwd).add(new THREE.Vector3(-dir.z,.5,dir.x)));
+      hl2.position.copy(v.g.position.clone().add(fwd).add(new THREE.Vector3(dir.z,.5,-dir.x)));
+    }
+  });
+}
+
+// ── RENDER LOOP ───────────────────────────────────────────────
+const clock=new THREE.Clock();
+let pulse=0;
+function render(){
+  requestAnimationFrame(render);
+  const dt=Math.min(clock.getDelta(),.05);pulse+=dt*2;
+  if(running&&st<TOTAL){st+=dt;frame(st,dt);posVehs();updateVehUI();}
+  updPars();
+  // Camera smooth
+  camCur.pos=(camCur.pos||cam.position.clone());
+  camCur.pos.lerp(camTgt.pos,.055);
+  lookV.lerp(camTgt.look,.055);
+  cam.position.copy(camCur.pos);
+  if(shake>.5){cam.position.x+=(Math.random()-.5)*shake*.5;cam.position.y+=(Math.random()-.5)*shake*.3;shake*=.82;}
+  cam.lookAt(lookV);
+  // Pulse danger zone ring
+  scene.children.filter(c=>c.isMesh&&c.material&&c.material.opacity>.1&&c.material.opacity<.5).forEach(m=>{
+    if(m.material.color&&m.material.color.r>.8)m.material.opacity=.18+.15*Math.sin(pulse);
+  });
+  renderer.render(scene,cam);
+}
+
+// ── CONTROLS ─────────────────────────────────────────────────
+function play(){running=true;}
+function restart(){
+  running=false;st=0;phase=0;shake=0;corridorGlow=0;fogLvl=0;alCount=0;
+  Object.keys(done).forEach(k=>delete done[k]);
+  pars.forEach(p=>scene.remove(p.mesh));pars=[];
+  document.getElementById('alog').innerHTML='';
+  document.getElementById('replay').style.display='none';
+  document.getElementById('sirenBorder').classList.remove('on');
+  document.getElementById('emer').classList.remove('on');
+  document.getElementById('vw').classList.remove('on');
+  document.getElementById('pf').style.width='0%';
+  document.getElementById('rtime').textContent='0s';
+  document.getElementById('s-acc').textContent='0';
+  document.getElementById('s-al').textContent='0';
+  document.getElementById('rd').style.opacity='0';
+  hl1.intensity=0;hl2.intensity=0;
+  scene.fog=new THREE.FogExp2(0x0a1520,.014);
+  buildVehs();updateVehUI();updatePhUI(0,0);
+  setNar('HILLSAFE AI · 4D HD SIMULATION','Press ▶ Play. Auto-playing cinematic accident on Banihal Pass J&K. Multiple camera angles. Hindi voice alerts fire on collision.');
+  setPhTitle('SYSTEM READY','Press ▶ Play to begin');
+  speechSynthesis.cancel();setCam('overview');
+  setTimeout(()=>{running=true;document.getElementById('rd').style.opacity='1';},500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+buildWorld();buildVehs();
+updateVehUI();updatePhUI(0,0);
+speechSynthesis.getVoices();setTimeout(()=>speechSynthesis.getVoices(),1000);
+render();
+</script>
+</body>
+</html>
